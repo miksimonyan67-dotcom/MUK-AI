@@ -217,7 +217,7 @@ def safe_generate(client_obj, contents):
     models_to_try = [
         "gemini-2.5-flash",
         "gemini-1.5-flash",
-        "gemini-pro"
+        "gemini-1.5-pro"
     ]
     last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
@@ -247,7 +247,7 @@ def safe_generate_image(client_obj, prompt_text):
     models_to_try = [
         "gemini-2.5-flash",
         "gemini-1.5-flash",
-        "gemini-pro"
+        "gemini-1.5-pro"
     ]
     last_error = None
     config = types.GenerateContentConfig(
