@@ -19,13 +19,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Hide top header, developer toolbar, and menu across ALL devices for guests
+# Hide unnecessary toolbar elements while keeping the sidebar toggle button fully functional
 hide_streamlit_style = """
 <style>
-header[data-testid="stHeader"] {
-    display: none !important;
-    visibility: hidden !important;
-}
 div[data-testid="stToolbar"] {
     display: none !important;
     visibility: hidden !important;
