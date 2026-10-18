@@ -215,8 +215,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 
 def safe_generate(client_obj, contents):
     models_to_try = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash"
+        "gemini-2.5-flash"
     ]
     last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
@@ -244,8 +243,7 @@ def safe_generate(client_obj, contents):
 
 def safe_generate_image(client_obj, prompt_text):
     models_to_try = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash"
+        "gemini-2.5-flash"
     ]
     last_error = None
     config = types.GenerateContentConfig(
