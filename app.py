@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- FUTURISTIC CYBERPUNK & GLASSMORPHISM UI STYLING ---
+# --- FUTURISTIC CYBERPUNK & VISIBILITY FIX STYLING ---
 futuristic_style = """
 <style>
 /* Hide default toolbars and footers while keeping sidebar toggle working */
@@ -36,10 +36,19 @@ footer { visibility: hidden !important; }
     color: #e2e8f0;
 }
 
-/* Glassmorphism Sidebar */
+/* Glassmorphism Sidebar with Guaranteed Text Visibility */
 section[data-testid="stSidebar"] {
     background-color: #0f172a;
     border-right: 1px solid #1e293b;
+}
+
+section[data-testid="stSidebar"] p, 
+section[data-testid="stSidebar"] span, 
+section[data-testid="stSidebar"] label, 
+section[data-testid="stSidebar"] h1, 
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] h3 {
+    color: #f8fafc !important;
 }
 
 /* Glowing Neon Accent Buttons */
@@ -548,4 +557,5 @@ with tab7:
 
 # --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
 st.sidebar.markdown("---")
+st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='font-size: 12px; color: gray; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
