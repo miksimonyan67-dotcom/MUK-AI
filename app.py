@@ -19,21 +19,52 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Hide unnecessary toolbar elements while keeping the sidebar toggle button fully functional
-hide_streamlit_style = """
+# --- FUTURISTIC CYBERPUNK & GLASSMORPHISM UI STYLING ---
+futuristic_style = """
 <style>
-div[data-testid="stToolbar"] {
-    display: none !important;
-    visibility: hidden !important;
+/* Hide default toolbars and footers while keeping sidebar toggle working */
+div[data-testid="stToolbar"] { 
+    display: none !important; 
+    visibility: hidden !important; 
 }
-#MainMenu {visibility: hidden !important;}
-footer {visibility: hidden !important;}
+#MainMenu { visibility: hidden !important; }
+footer { visibility: hidden !important; }
+
+/* Dark Sci-Fi Cyberpunk Background */
+.stApp {
+    background-color: #0b0f19;
+    color: #e2e8f0;
+}
+
+/* Glassmorphism Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #0f172a;
+    border-right: 1px solid #1e293b;
+}
+
+/* Glowing Neon Accent Buttons */
+.stButton > button {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    color: #38bdf8;
+    border: 1px solid #6366f1;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+/* Padding adjustments */
 .block-container {
     padding-top: 2rem !important;
 }
 </style>
 """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+st.markdown(futuristic_style, unsafe_allow_html=True)
 
 # --- BROWSER-BASED PERSISTENT LOGIN HANDLER ---
 if "logged_in" not in st.session_state:
