@@ -392,11 +392,13 @@ with tab4:
     st.header("📊 Presentation Maker")
     st.write("Generate a complete, professional slide-by-slide presentation deck with titles, bullet points, and speaker notes.")
     pres_topic = st.text_input("Presentation Topic", placeholder="e.g., History of Space Exploration or AI", key="pres_top")
-    pres_slides = st.slider("Number of Slides", min_value=10, max_value=20, value=10)
+    pres_slides = st.slider("Number of Slides", min_value=0, max_value=20, value=10)
     
     if st.button("Generate Presentation Outline"):
         if not client:
             st.error("API client not initialized.")
+        elif pres_slides == 0:
+            st.warning("⚠️ Please select at least 1 slide.")
         elif pres_topic:
             with st.spinner("Designing presentation deck..."):
                 try:
