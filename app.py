@@ -175,10 +175,6 @@ if st.session_state.global_history:
 else:
     st.sidebar.write("No questions asked yet.")
 
-# Branding info in sidebar
-st.sidebar.markdown("---")
-st.sidebar.markdown("<p style='font-size: 12px; color: gray;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
-
 # Voice synthesizer
 def speak_natural_voice(text_to_speak):
     if enable_natural_voice:
@@ -396,7 +392,7 @@ with tab4:
     st.header("📊 Presentation Maker")
     st.write("Generate a complete, professional slide-by-slide presentation deck with titles, bullet points, and speaker notes.")
     pres_topic = st.text_input("Presentation Topic", placeholder="e.g., History of Space Exploration or AI", key="pres_top")
-    pres_slides = st.slider("Number of Slides", min_value=3, max_value=10, value=5)
+    pres_slides = st.slider("Number of Slides", min_value=10, max_value=20, value=10)
     
     if st.button("Generate Presentation Outline"):
         if not client:
@@ -516,3 +512,7 @@ with tab7:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a math expression.")
+
+# --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
+st.sidebar.markdown("---")
+st.sidebar.markdown("<p style='font-size: 12px; color: gray; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
