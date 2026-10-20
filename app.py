@@ -19,27 +19,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- FUTURISTIC CYBERPUNK & PERFECT HEADER FIX ---
+# --- EXACT HEADER FIX: KEEPS >> VISIBLE, HIDES TOP-RIGHT BUTTONS ---
 futuristic_style = """
 <style>
-/* Hide default footers, status widgets, and Streamlit branding */
+/* Hide default footers, status widgets, and viewer badges */
 footer { visibility: hidden !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
 .stDeployButton { display: none !important; }
 div[class*="viewerBadge"] { display: none !important; }
 
-/* Hide ONLY the top-right toolbar items (Share, Star, Edit, GitHub) */
-[data-testid="stToolbar"] {
+/* Hide ONLY the top-right toolbar action buttons (Share, Star, Edit, GitHub icon)
+   while leaving the rest of the header intact so the left (>>) button stays visible */
+[data-testid="stToolbar"] button,
+[data-testid="stToolbar"] a,
+[data-testid="stHeader"] a[href*="github"] {
     display: none !important;
     visibility: hidden !important;
 }
 
-/* Make header background transparent */
-[data-testid="stHeader"] {
-    background-color: transparent !important;
-}
-
-/* FORCE the top-left sidebar toggle button (>>) to be fully visible, bright, and clickable */
+/* FORCE the top-left sidebar toggle button (>>) to be fully visible and glowing */
 [data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
