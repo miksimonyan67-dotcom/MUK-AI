@@ -19,9 +19,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- FUTURISTIC CYBERPUNK & SIDEBAR VISIBILITY STYLING ---
+# --- FUTURISTIC CYBERPUNK & CLEAN UI STYLING (HIDES BOTTOM-RIGHT BADGE) ---
 futuristic_style = """
 <style>
+/* Hide default toolbars, footers, and bottom-right 'Manage app' badge */
+div[data-testid="stToolbar"] { 
+    display: none !important; 
+    visibility: hidden !important; 
+}
+#MainMenu { visibility: hidden !important; }
+footer { visibility: hidden !important; }
+[data-testid="stStatusWidget"] { 
+    display: none !important; 
+    visibility: hidden !important; 
+}
+.stDeployButton { 
+    display: none !important; 
+    visibility: hidden !important; 
+}
+div[class*="viewerBadge"] { 
+    display: none !important; 
+    visibility: hidden !important; 
+}
+
 /* Dark Sci-Fi Cyberpunk Background */
 .stApp {
     background-color: #0b0f19;
@@ -549,4 +569,5 @@ with tab7:
 
 # --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
 st.sidebar.markdown("---")
+st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
