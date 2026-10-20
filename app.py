@@ -19,29 +19,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- FUTURISTIC CYBERPUNK & SIDEBAR TOGGLE FIX ---
+# --- FUTURISTIC CYBERPUNK & HEADER TOOLBAR FIX ---
 futuristic_style = """
 <style>
-/* Hide bottom-right badge and footers, but KEEP top-left sidebar toggle visible */
-#MainMenu { visibility: hidden !important; }
+/* Hide default footers, status widgets, and Streamlit branding */
 footer { visibility: hidden !important; }
-[data-testid="stStatusWidget"] { 
-    display: none !important; 
-    visibility: hidden !important; 
-}
-.stDeployButton { 
-    display: none !important; 
-    visibility: hidden !important; 
-}
-div[class*="viewerBadge"] { 
-    display: none !important; 
-    visibility: hidden !important; 
+[data-testid="stStatusWidget"] { display: none !important; }
+.stDeployButton { display: none !important; }
+div[class*="viewerBadge"] { display: none !important; }
+
+/* Keep the top toolbar container visible so the left sidebar toggle works,
+   but hide all buttons on the top-right side (Share, Star, Edit, GitHub link) */
+[data-testid="stHeader"] {
+    background-color: transparent !important;
 }
 
-/* Explicitly make sure the top-left sidebar collapse/expand button is visible */
+[data-testid="stToolbar"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Explicitly force the top-left sidebar toggle button (>>) to be visible and styled */
 [data-testid="collapsedControl"] {
-    display: block !important;
+    display: flex !important;
     visibility: visible !important;
+    color: #38bdf8 !important;
 }
 
 /* Dark Sci-Fi Cyberpunk Background */
