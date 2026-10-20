@@ -19,14 +19,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- FUTURISTIC CYBERPUNK & CLEAN UI STYLING (HIDES BOTTOM-RIGHT BADGE) ---
+# --- FUTURISTIC CYBERPUNK & SIDEBAR TOGGLE FIX ---
 futuristic_style = """
 <style>
-/* Hide default toolbars, footers, and bottom-right 'Manage app' badge */
-div[data-testid="stToolbar"] { 
-    display: none !important; 
-    visibility: hidden !important; 
-}
+/* Hide bottom-right badge and footers, but KEEP top-left sidebar toggle visible */
 #MainMenu { visibility: hidden !important; }
 footer { visibility: hidden !important; }
 [data-testid="stStatusWidget"] { 
@@ -40,6 +36,12 @@ footer { visibility: hidden !important; }
 div[class*="viewerBadge"] { 
     display: none !important; 
     visibility: hidden !important; 
+}
+
+/* Explicitly make sure the top-left sidebar collapse/expand button is visible */
+[data-testid="collapsedControl"] {
+    display: block !important;
+    visibility: visible !important;
 }
 
 /* Dark Sci-Fi Cyberpunk Background */
@@ -569,5 +571,4 @@ with tab7:
 
 # --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
 st.sidebar.markdown("---")
-st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
