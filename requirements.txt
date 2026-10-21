@@ -1,4 +1,7 @@
 streamlit
 google-genai
+pillow
 reportlab
-Pillow
+python-pptx
+pypdf
+matplotlib
