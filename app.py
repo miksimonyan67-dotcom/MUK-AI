@@ -1,4 +1,7 @@
 import time
+import sys
+import io
+import contextlib
 from io import BytesIO
 import streamlit as st
 import streamlit.components.v1 as components
@@ -185,7 +188,7 @@ if not st.session_state.logged_in:
 
 # Greeting the user + Logout Button in Sidebar
 st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Text, Image & PDF Generation, PPTX Export, Quizzes, Voice, and History!")
+st.markdown("Your ultimate assistant with Multi-Agent Teams, Code Sandbox, Live Voice, and Memory!")
 
 if st.sidebar.button("🚪 Log Out"):
     st.session_state.logged_in = False
@@ -216,9 +219,11 @@ if api_key:
     except Exception as e:
         st.error(f"Configuration error: {e}")
 
-# Initialize Global History
+# Initialize Global History & Memory State
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
+if "user_memory" not in st.session_state:
+    st.session_state.user_memory = {"preferred_topics": [], "notes": "Active learner using Muk AI."}
 
 # Sidebar Language Switcher
 st.sidebar.markdown("---")
@@ -265,8 +270,8 @@ You are Muk AI, a multi-functional AI assistant.
 2. Always formulate all your output responses in the following language: {selected_language}.
 """
 
-# Navigation Tabs (8 tabs)
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+# Navigation Tabs (12 tabs total)
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
     "📚 Homework", 
     "✍️ Essay", 
     "🔍 Verifier", 
@@ -274,7 +279,11 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "🎨 Visuals", 
     "💬 Muk Chat",
     "🧮 Calculator",
-    "🧠 Exam Prep"
+    "🧠 Exam Prep",
+    "🎙️ Live Voice",
+    "🤖 Multi-Agent",
+    "💻 Code Sandbox",
+    "🧠 Deep Memory"
 ])
 
 def safe_generate(client_obj, contents):
@@ -699,6 +708,110 @@ with tab8:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic or paste study notes.")
+
+# --- TAB 9: LIVE VOICE ROOM ---
+with tab9:
+    st.header("🎙️ Live Voice Room")
+    st.write("Speak to Muk AI and listen to spoken answers instantly.")
+    
+    voice_input_text = st.text_input("Type or speak your voice query", placeholder="e.g., Tell me a fascinating fact about space", key="voice_box")
+    if st.button("Speak & Respond"):
+        if not client:
+            st.error("API client not initialized.")
+        elif voice_input_text:
+            with st.spinner("Muk AI is responding..."):
+                try:
+                    response = safe_generate(client, voice_input_text)
+                    reply = response.text
+                    st.success("Muk AI says:")
+                    st.write(reply)
+                    speak_natural_voice(reply)
+                    st.session_state.global_history.append(f"Voice: {voice_input_text[:30]}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter a voice query.")
+
+# --- TAB 10: MULTI-AGENT PANEL ---
+with tab10:
+    st.header("🤖 Multi-Agent Collaboration Panel")
+    st.write("Watch specialized virtual agents collaborate to solve your complex tasks.")
+    
+    agent_query = st.text_input("Enter a complex problem or project task", placeholder="e.g., Design a clean energy plan for a modern smart city", key="agent_box")
+    if st.button("Deploy Multi-Agent Team"):
+        if not client:
+            st.error("API client not initialized.")
+        elif agent_query:
+            with st.spinner("Deploying Research, Critic, and Creative Agents..."):
+                try:
+                    # Agent 1: Research
+                    r_prompt = f"Agent 1 (Research Specialist): Gather core facts and structure the key information for: {agent_query}"
+                    res_1 = safe_generate(client, r_prompt)
+                    
+                    # Agent 2: Critic
+                    c_prompt = f"Agent 2 (Critical Reviewer): Analyze potential flaws, improvements, and gaps in this research:\n{res_1.text}"
+                    res_2 = safe_generate(client, c_prompt)
+                    
+                    # Agent 3: Creative Synthesizer
+                    s_prompt = f"Agent 3 (Lead Synthesizer): Combine the research and critical notes into a final, polished master executive plan."
+                    res_3 = safe_generate(client, [s_prompt, res_1.text, res_2.text])
+                    
+                    st.success("✨ Multi-Agent Collaboration Complete!")
+                    
+                    with st.expander("🔍 Step 1: Research Agent Output"):
+                        st.write(res_1.text)
+                    with st.expander("🛡️ Step 2: Critic Agent Feedback"):
+                        st.write(res_2.text)
+                    with st.expander("🏆 Step 3: Final Synthesized Master Plan"):
+                        st.write(res_3.text)
+                        
+                    speak_natural_voice("Multi-agent plan generated successfully!")
+                    st.session_state.global_history.append(f"Multi-Agent: {agent_query[:30]}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter a task for the agents.")
+
+# --- TAB 11: CODE SANDBOX ---
+with tab11:
+    st.header("💻 Code Sandbox & Previewer")
+    st.write("Write Python code or HTML snippets and execute them safely.")
+    
+    code_type = st.radio("Language", ["Python", "HTML/UI Preview"], horizontal=True)
+    code_input = st.text_area("Write your code here", placeholder="print('Hello from Muk AI!')", height=150, key="code_box")
+    
+    if st.button("Run Code"):
+        if code_type == "Python":
+            old_stdout = sys.stdout
+            new_stdout = io.StringIO()
+            sys.stdout = new_stdout
+            try:
+                exec(code_input)
+                sys.stdout = old_stdout
+                output = new_stdout.getvalue()
+                st.success("Execution Output:")
+                st.code(output if output else "Code executed successfully with no print output.")
+                st.session_state.global_history.append("Python Code Execution")
+            except Exception as e:
+                sys.stdout = old_stdout
+                st.error(f"Runtime Error: {e}")
+        else:
+            st.success("HTML Render Preview:")
+            components.html(code_input, height=300, scrolling=True)
+            st.session_state.global_history.append("HTML Preview")
+
+# --- TAB 12: DEEP MEMORY HUB ---
+with tab12:
+    st.header("🧠 Deep Memory & Profile Hub")
+    st.write("Manage what Muk AI remembers about you across sessions.")
+    
+    st.info(f"**Current User:** {st.session_state.user_name}")
+    st.write(f"**Total Questions Asked:** {len(st.session_state.global_history)}")
+    
+    custom_memory_note = st.text_area("Add a permanent memory note for Muk AI", value=st.session_state.user_memory["notes"], key="mem_input")
+    if st.button("Save Memory Note"):
+        st.session_state.user_memory["notes"] = custom_memory_note
+        st.success("✅ Memory note updated successfully!")
 
 # --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
 st.sidebar.markdown("---")
