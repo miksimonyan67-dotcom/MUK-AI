@@ -451,12 +451,12 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13
 ])
 
 def safe_generate(client_obj, contents):
-    models_to_try = ["gemini-3.8-flash"]
+    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
     last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     
     for model_id in models_to_try:
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 response = client_obj.models.generate_content(
                     model=model_id, 
@@ -467,17 +467,15 @@ def safe_generate(client_obj, contents):
             except Exception as err:
                 last_error = err
                 err_msg = str(err).lower()
-                if "404" in err_msg or "not_found" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
-                    break
-                if "503" in err_msg or "unavailable" in err_msg:
-                    time.sleep(1.5)
+                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
+                    time.sleep(1.5 * (attempt + 1))
                     continue
                 else:
                     break
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
-    models_to_try = ["gemini-3.8-flash"]
+    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash"]
     last_error = None
     config = types.GenerateContentConfig(
         response_modalities=["IMAGE", "TEXT"],
@@ -485,7 +483,7 @@ def safe_generate_image(client_obj, prompt_text):
     )
     
     for model_id in models_to_try:
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 response = client_obj.models.generate_content(
                     model=model_id,
@@ -497,7 +495,7 @@ def safe_generate_image(client_obj, prompt_text):
                 last_error = err
                 err_msg = str(err).lower()
                 if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
-                    time.sleep(2)
+                    time.sleep(2 * (attempt + 1))
                     continue
                 else:
                     break
