@@ -382,7 +382,7 @@ st.sidebar.markdown("""
         <div class="eq-bar"></div>
     </div><br>
     • CORE: <span class="radar-beacon"></span><span style="color: #4ade80;">ONLINE</span><br>
-    • MODEL: GEMINI-FLASH<br>
+    • MODEL: GEMINI-2.5-FLASH<br>
     • AESTHETIC: ULTRA-HOLO<br>
     • QUERIES: {}
 </div>
@@ -451,7 +451,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13
 ])
 
 def safe_generate(client_obj, contents):
-    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
+    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest"]
     last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     
@@ -467,7 +467,7 @@ def safe_generate(client_obj, contents):
             except Exception as err:
                 last_error = err
                 err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
+                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
                     time.sleep(1.5 * (attempt + 1))
                     continue
                 else:
@@ -475,7 +475,7 @@ def safe_generate(client_obj, contents):
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
-    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash"]
+    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest"]
     last_error = None
     config = types.GenerateContentConfig(
         response_modalities=["IMAGE", "TEXT"],
@@ -494,7 +494,7 @@ def safe_generate_image(client_obj, prompt_text):
             except Exception as err:
                 last_error = err
                 err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
+                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
                     time.sleep(2 * (attempt + 1))
                     continue
                 else:
