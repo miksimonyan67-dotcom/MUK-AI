@@ -185,7 +185,7 @@ if not st.session_state.logged_in:
 
 # Greeting the user + Logout Button in Sidebar
 st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Text, Image & PDF Generation, PPTX Export, Quizzes, Voice, and History!")
+st.markdown("Your ultimate assistant with Text, Image & PDF Generation, Translation, Study Planning, and STEM tools!")
 
 if st.sidebar.button("🚪 Log Out"):
     st.session_state.logged_in = False
@@ -265,8 +265,8 @@ You are Muk AI, a multi-functional AI assistant.
 2. Always formulate all your output responses in the following language: {selected_language}.
 """
 
-# Navigation Tabs (8 tabs total)
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+# Navigation Tabs (13 tabs total)
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13 = st.tabs([
     "📚 Homework", 
     "✍️ Essay", 
     "🔍 Verifier", 
@@ -274,7 +274,12 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "🎨 Visuals", 
     "💬 Muk Chat",
     "🧮 Calculator",
-    "🧠 Exam Prep"
+    "🧠 Exam Prep",
+    "🔤 Translator",
+    "📅 Study Planner",
+    "🧪 Science & STEM",
+    "✉️ Email Writer",
+    "💡 Idea Lab"
 ])
 
 def safe_generate(client_obj, contents):
@@ -699,6 +704,134 @@ with tab8:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic or paste study notes.")
+
+# --- TAB 9: SMART MULTILINGUAL TRANSLATOR (FEATURE 4) ---
+with tab9:
+    st.header("🔤 Contextual Multilingual Translator")
+    st.write("Translate text while preserving context, idioms, and natural speaking tone.")
+    
+    trans_text = st.text_area("Enter text to translate", placeholder="e.g., How are you doing today?", key="trans_box")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        src_lang = st.selectbox("From Language", ["Auto-Detect", "English", "Armenian", "Russian"], key="src_lang")
+    with col_t2:
+        target_lang = st.selectbox("To Language", ["Armenian", "English", "Russian", "French", "German", "Spanish"], key="target_lang")
+        
+    if st.button("Translate with Context"):
+        if not client:
+            st.error("API client not initialized.")
+        elif trans_text:
+            with st.spinner("Translating..."):
+                try:
+                    prompt = f"Translate the following text from {src_lang} to {target_lang}. Preserve exact natural context and explain any idioms or cultural nuances if present: {trans_text}"
+                    response = safe_generate(client, prompt)
+                    st.session_state.global_history.append(f"Translation: {trans_text[:30]}")
+                    st.success("Translation:")
+                    st.write(response.text)
+                    speak_natural_voice(response.text[:300])
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter text to translate.")
+
+# --- TAB 10: DAILY STUDY PLANNER (FEATURE 5) ---
+with tab10:
+    st.header("📅 Daily Study Planner & Schedule Creator")
+    st.write("Generate customized study schedules tailored to your exams and available daily time.")
+    
+    subjects = st.text_input("Enter Subjects/Topics to study", placeholder="e.g., Math, Physics, Armenian History", key="plan_subjs")
+    days_left = st.number_input("Days until exam/deadline", min_value=1, max_value=60, value=7)
+    daily_hours = st.slider("Free study hours per day", min_value=1, max_value=10, value=3)
+    
+    if st.button("Create Study Schedule"):
+        if not client:
+            st.error("API client not initialized.")
+        elif subjects:
+            with st.spinner("Building custom study timetable..."):
+                try:
+                    prompt = f"Create a structured, day-by-day study schedule for the next {days_left} days covering these subjects: {subjects}. The student has {daily_hours} hours available each day. Include specific study goals and break periods."
+                    response = safe_generate(client, prompt)
+                    st.session_state.global_history.append(f"Planner: {subjects[:30]}")
+                    st.success("Your Personalized Timetable:")
+                    st.write(response.text)
+                    speak_natural_voice("Your study schedule is ready!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter your subjects or topics.")
+
+# --- TAB 11: SCIENCE & STEM ASSISTANT (FEATURE 6) ---
+with tab11:
+    st.header("🧪 Science & Physics STEM Assistant")
+    st.write("Understand complex physics, chemistry, or biology formulas with step-by-step real-world explanations.")
+    
+    stem_concept = st.text_input("Enter Science Question or Formula", placeholder="e.g., Explain Newton's Second Law F=ma or Photosynthesis", key="stem_box")
+    
+    if st.button("Explain Science Concept"):
+        if not client:
+            st.error("API client not initialized.")
+        elif stem_concept:
+            with st.spinner("Analyzing scientific concept..."):
+                try:
+                    prompt = f"Act as an expert STEM tutor. Explain this science concept or formula step-by-step with real-world examples, formula breakdown, and intuitive analogies: {stem_concept}"
+                    response = safe_generate(client, prompt)
+                    st.session_state.global_history.append(f"STEM: {stem_concept[:30]}")
+                    st.success("Scientific Breakdown:")
+                    st.write(response.text)
+                    speak_natural_voice("Scientific explanation complete!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter a science question or formula.")
+
+# --- TAB 12: PROFESSIONAL EMAIL WRITER (FEATURE 7) ---
+with tab12:
+    st.header("✉️ Professional Email & Letter Writer")
+    st.write("Draft polite, well-phrased emails and formal requests instantly.")
+    
+    email_purpose = st.text_input("Main Purpose of Email", placeholder="e.g., Asking teacher for extra deadline time or sending job application", key="email_purp")
+    email_tone = st.selectbox("Tone", ["Formal / Professional", "Friendly / Polite", "Persuasive"], key="email_tone")
+    
+    if st.button("Draft Email"):
+        if not client:
+            st.error("API client not initialized.")
+        elif email_purpose:
+            with st.spinner("Drafting email..."):
+                try:
+                    prompt = f"Draft a complete, well-structured email with Subject line and Body. Tone should be {email_tone}. Purpose: {email_purpose}"
+                    response = safe_generate(client, prompt)
+                    st.session_state.global_history.append(f"Email: {email_purpose[:30]}")
+                    st.success("Drafted Email:")
+                    st.write(response.text)
+                    speak_natural_voice("Your email draft is ready!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter the main purpose of your email.")
+
+# --- TAB 13: CREATIVE IDEA GENERATOR (FEATURE 8) ---
+with tab13:
+    st.header("💡 Brainstorming & Idea Generator")
+    st.write("Generate creative concepts for video projects, presentations, essays, or apps.")
+    
+    idea_topic = st.text_input("What do you want ideas for?", placeholder="e.g., Creative video topic about sea painting or web app idea", key="idea_box")
+    
+    if st.button("Generate Creative Ideas"):
+        if not client:
+            st.error("API client not initialized.")
+        elif idea_topic:
+            with st.spinner("Brainstorming creative ideas..."):
+                try:
+                    prompt = f"Generate 5 unique, creative, and engaging project ideas or concepts for: {idea_topic}. Include a title, brief description, and key highlight for each idea."
+                    response = safe_generate(client, prompt)
+                    st.session_state.global_history.append(f"Idea Lab: {idea_topic[:30]}")
+                    st.success("Creative Concepts:")
+                    st.write(response.text)
+                    speak_natural_voice("Here are your creative ideas!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        else:
+            st.warning("Please enter a topic to generate ideas.")
 
 # --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
 st.sidebar.markdown("---")
