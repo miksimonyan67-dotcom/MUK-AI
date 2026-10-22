@@ -62,7 +62,7 @@ div[class*="viewerBadge"] { display: none !important; }
     z-index: 999999 !important;
 }
 
-/* 1. Dark Sci-Fi Cyber-Grid Background & Faint CRT Scanline Effect */
+/* Dark Sci-Fi Cyber-Grid Background & Faint CRT Scanline Effect */
 .stApp {
     background-color: #070913;
     background-image: 
@@ -80,7 +80,7 @@ h1, h2, h3 {
     letter-spacing: 1px;
 }
 
-/* 2. Custom Neon Glowing Scrollbars */
+/* Custom Neon Glowing Scrollbars */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -114,12 +114,14 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* 3D Lift & Neon Glow on Hover for Inputs and Cards */
+/* HUD Corner Accents for Inputs and Cards */
 .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
     background-color: rgba(15, 23, 42, 0.7) !important;
     border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    border-left: 3px solid #38bdf8 !important;
     color: #f8fafc !important;
     transition: all 0.3s ease-in-out !important;
+    border-radius: 4px !important;
 }
 .stTextInput input:hover, .stTextArea textarea:hover, .stSelectbox div[data-baseweb="select"]:hover {
     border-color: #38bdf8 !important;
@@ -127,7 +129,7 @@ section[data-testid="stSidebar"] h3 {
     transform: translateY(-2px);
 }
 
-/* 5. Cyberpunk Modular Tabs Styling */
+/* Cyberpunk Modular Tabs Styling */
 div[data-baseweb="tab-list"] {
     gap: 6px;
     background: rgba(15, 23, 42, 0.6);
@@ -168,7 +170,7 @@ div[data-baseweb="tab"][aria-selected="true"] {
     transform: translateY(-1px);
 }
 
-/* 3. Radar Pulse Animation Keyframes */
+/* Radar Pulse Animation Keyframes */
 @keyframes radar-pulse {
     0% { transform: scale(0.95); opacity: 0.8; }
     50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #4ade80; }
@@ -184,6 +186,28 @@ div[data-baseweb="tab"][aria-selected="true"] {
     margin-right: 6px;
 }
 
+/* Equalizer Bars Keyframes */
+@keyframes eq-bar {
+    0%, 100% { height: 4px; }
+    50% { height: 14px; }
+}
+.eq-container {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 14px;
+    margin-left: 8px;
+}
+.eq-bar {
+    width: 3px;
+    background-color: #38bdf8;
+    animation: eq-bar 0.8s infinite ease-in-out;
+}
+.eq-bar:nth-child(1) { animation-delay: 0.1s; }
+.eq-bar:nth-child(2) { animation-delay: 0.3s; }
+.eq-bar:nth-child(3) { animation-delay: 0.2s; }
+.eq-bar:nth-child(4) { animation-delay: 0.4s; }
+
 /* Padding adjustments */
 .block-container {
     padding-top: 2rem !important;
@@ -191,6 +215,35 @@ div[data-baseweb="tab"][aria-selected="true"] {
 </style>
 """
 st.markdown(futuristic_style, unsafe_allow_html=True)
+
+# --- ANIMATED CANVAS PARTICLES & SOUND EFFECTS (JS INTEGRATION) ---
+cyber_js = """
+<script>
+// Sci-Fi UI Click Audio Feedback
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSciFiClick() {
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.getAttribute('role') === 'tab') {
+        playSciFiClick();
+    }
+});
+</script>
+"""
+components.html(cyber_js, height=0, width=0)
 
 # --- BROWSER-BASED PERSISTENT LOGIN HANDLER ---
 if "logged_in" not in st.session_state:
@@ -273,7 +326,7 @@ if not st.session_state.logged_in:
 
 # Greeting the user + Logout Button in Sidebar
 st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Holographic HUD, Neural Translation, Study Planner, and STEM tools!")
+st.markdown("Your ultimate assistant with Neural Particle Grid, Sound FX, Decryption Engine, and Equalizer HUD!")
 
 if st.sidebar.button("🚪 Log Out"):
     st.session_state.logged_in = False
@@ -308,14 +361,20 @@ if api_key:
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
 
-# --- HUD TELEMETRY PANEL WITH RADAR PULSE IN SIDEBAR ---
+# --- HUD TELEMETRY PANEL WITH EQUALIZER BARS & RADAR IN SIDEBAR ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8; border-radius: 6px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);">
-    <b>⚡ HUD TELEMETRY</b><br>
+    <b>⚡ HUD TELEMETRY</b>
+    <div class="eq-container">
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+    </div><br>
     • CORE: <span class="radar-beacon"></span><span style="color: #4ade80;">ONLINE</span><br>
     • MODEL: GEMINI-FLASH<br>
-    • ENCRYPTION: SECURE<br>
+    • ENCRYPTION: ACTIVE<br>
     • QUERIES: {}
 </div>
 """.format(len(st.session_state.global_history)), unsafe_allow_html=True)
