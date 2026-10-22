@@ -28,9 +28,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- FUTURISTIC CYBERPUNK & PERFECT HEADER FIX ---
+# --- ADVANCED FUTURISTIC CYBERPUNK & HOLOGRAPHIC DESIGN ---
 futuristic_style = """
 <style>
+/* Import Sci-Fi Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
+
 /* Hide default footers, status widgets, and viewer badges */
 footer { visibility: hidden !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
@@ -59,16 +62,28 @@ div[class*="viewerBadge"] { display: none !important; }
     z-index: 999999 !important;
 }
 
-/* Dark Sci-Fi Cyberpunk Background */
+/* Dark Sci-Fi Cyber-Grid Background */
 .stApp {
-    background-color: #0b0f19;
+    background-color: #070913;
+    background-image: 
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
     color: #e2e8f0;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+/* Apply Orbitron font to titles */
+h1, h2, h3 {
+    font-family: 'Orbitron', sans-serif !important;
+    letter-spacing: 1px;
 }
 
 /* Glassmorphism Sidebar */
 section[data-testid="stSidebar"] {
-    background-color: #0f172a;
-    border-right: 1px solid #1e293b;
+    background-color: rgba(11, 15, 25, 0.95);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 section[data-testid="stSidebar"] p, 
@@ -80,20 +95,28 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* Glowing Neon Accent Buttons */
+/* Holographic Glass Containers / Cards */
+div.stTabs [data-baseweb="tab-panel"], div[data-testid="stVerticalBlock"] > div {
+    backdrop-filter: blur(8px);
+}
+
+/* Glowing Neon Accent Buttons with Pulse */
 .stButton > button {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
     color: #38bdf8;
     border: 1px solid #6366f1;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
     transition: all 0.3s ease;
 }
 
 .stButton > button:hover {
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
     border-color: #38bdf8;
     color: #ffffff;
+    transform: translateY(-1px);
 }
 
 /* Padding adjustments */
@@ -132,7 +155,7 @@ if "user" in query_params and query_params["user"]:
 # Login Screen if not logged in
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
-    st.markdown("### Please sign in to access your AI assistant")
+    st.markdown("### Please sign in to access your futuristic AI assistant")
     
     login_tab1, login_tab2 = st.tabs(["🔴 Sign in with Google", "✍️ Manual Sign In"])
     
@@ -185,7 +208,7 @@ if not st.session_state.logged_in:
 
 # Greeting the user + Logout Button in Sidebar
 st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Text, Image & PDF Generation, Translation, Study Planning, and STEM tools!")
+st.markdown("Your ultimate assistant with Holographic HUD, Neural Translation, Study Planner, and STEM tools!")
 
 if st.sidebar.button("🚪 Log Out"):
     st.session_state.logged_in = False
@@ -219,6 +242,18 @@ if api_key:
 # Initialize Global History
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
+
+# --- HUD TELEMETRY PANEL IN SIDEBAR ---
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+<div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #38bdf8; border-radius: 6px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8;">
+    <b>⚡ HUD TELEMETRY</b><br>
+    • CORE: <span style="color: #4ade80;">ONLINE</span><br>
+    • MODEL: GEMINI-FLASH<br>
+    • ENCRYPTION: SECURE<br>
+    • QUERIES: {}
+</div>
+""".format(len(st.session_state.global_history)), unsafe_allow_html=True)
 
 # Sidebar Language Switcher
 st.sidebar.markdown("---")
@@ -666,7 +701,7 @@ with tab7:
                 ax.set_title(f"Graph of {calc_input}", color="white")
                 ax.grid(True, linestyle="--", alpha=0.5)
                 fig.patch.set_facecolor('#0f172a')
-                ax.set_facecolor('#0b0f19')
+                ax.set_facecolor('#070913')
                 ax.tick_params(colors='white')
                 ax.xaxis.label.set_color('white')
                 ax.yaxis.label.set_color('white')
@@ -705,12 +740,12 @@ with tab8:
         else:
             st.warning("Please enter a topic or paste study notes.")
 
-# --- TAB 9: SMART MULTILINGUAL TRANSLATOR (FEATURE 4) ---
+# --- TAB 9: SMART MULTILINGUAL TRANSLATOR ---
 with tab9:
     st.header("🔤 Contextual Multilingual Translator")
     st.write("Translate text while preserving context, idioms, and natural speaking tone.")
     
-    trans_text = st.text_area("Enter text to translate", placeholder="e.g., How are you doing today?", key="trans_box")
+    trans_text = st.text_input("Enter text to translate", placeholder="e.g., How are you doing today?", key="trans_box")
     col_t1, col_t2 = st.columns(2)
     with col_t1:
         src_lang = st.selectbox("From Language", ["Auto-Detect", "English", "Armenian", "Russian"], key="src_lang")
@@ -734,7 +769,7 @@ with tab9:
         else:
             st.warning("Please enter text to translate.")
 
-# --- TAB 10: DAILY STUDY PLANNER (FEATURE 5) ---
+# --- TAB 10: DAILY STUDY PLANNER ---
 with tab10:
     st.header("📅 Daily Study Planner & Schedule Creator")
     st.write("Generate customized study schedules tailored to your exams and available daily time.")
@@ -760,7 +795,7 @@ with tab10:
         else:
             st.warning("Please enter your subjects or topics.")
 
-# --- TAB 11: SCIENCE & STEM ASSISTANT (FEATURE 6) ---
+# --- TAB 11: SCIENCE & STEM ASSISTANT ---
 with tab11:
     st.header("🧪 Science & Physics STEM Assistant")
     st.write("Understand complex physics, chemistry, or biology formulas with step-by-step real-world explanations.")
@@ -784,7 +819,7 @@ with tab11:
         else:
             st.warning("Please enter a science question or formula.")
 
-# --- TAB 12: PROFESSIONAL EMAIL WRITER (FEATURE 7) ---
+# --- TAB 12: PROFESSIONAL EMAIL WRITER ---
 with tab12:
     st.header("✉️ Professional Email & Letter Writer")
     st.write("Draft polite, well-phrased emails and formal requests instantly.")
@@ -809,7 +844,7 @@ with tab12:
         else:
             st.warning("Please enter the main purpose of your email.")
 
-# --- TAB 13: CREATIVE IDEA GENERATOR (FEATURE 8) ---
+# --- TAB 13: CREATIVE IDEA GENERATOR ---
 with tab13:
     st.header("💡 Brainstorming & Idea Generator")
     st.write("Generate creative concepts for video projects, presentations, essays, or apps.")
