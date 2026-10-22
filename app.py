@@ -28,7 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ADVANCED FUTURISTIC CYBERPUNK & HOLOGRAPHIC DESIGN OVERHAUL ---
+# --- WORLD-CLASS HOLOGRAPHIC CYBERPUNK & AURORA DESIGN SYSTEM ---
 futuristic_style = """
 <style>
 /* Import Sci-Fi Fonts */
@@ -62,22 +62,28 @@ div[class*="viewerBadge"] { display: none !important; }
     z-index: 999999 !important;
 }
 
-/* Dark Sci-Fi Cyber-Grid Background & Faint CRT Scanline Effect */
+/* 1. Deep Space Aurora Borealis Background & CRT Scanlines */
 .stApp {
-    background-color: #070913;
+    background-color: #050711;
     background-image: 
-        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px),
-        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-    background-size: 30px 30px, 30px 30px, 100% 4px;
+        radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        linear-gradient(rgba(56, 189, 248, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.02) 1px, transparent 1px),
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+    background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px, 100% 4px;
     color: #e2e8f0;
     font-family: 'Share Tech Mono', monospace;
 }
 
-/* Apply Orbitron font to titles */
+/* 2. Shimmering Neon Gradient Titles */
 h1, h2, h3 {
     font-family: 'Orbitron', sans-serif !important;
-    letter-spacing: 1px;
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
 }
 
 /* Custom Neon Glowing Scrollbars */
@@ -86,23 +92,24 @@ h1, h2, h3 {
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #070913;
+    background: #050711;
 }
 ::-webkit-scrollbar-thumb {
     background: #38bdf8;
     border-radius: 3px;
-    box-shadow: 0 0 10px #38bdf8;
+    box-shadow: 0 0 12px #38bdf8;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #818cf8;
-    box-shadow: 0 0 15px #818cf8;
+    background: #c084fc;
+    box-shadow: 0 0 18px #c084fc;
 }
 
-/* Glassmorphism Sidebar */
+/* Glassmorphism Sidebar with Aurora Glow */
 section[data-testid="stSidebar"] {
-    background-color: rgba(11, 15, 25, 0.95);
-    backdrop-filter: blur(12px);
-    border-right: 1px solid rgba(56, 189, 248, 0.2);
+    background-color: rgba(9, 13, 26, 0.92);
+    backdrop-filter: blur(16px);
+    border-right: 1px solid rgba(56, 189, 248, 0.25);
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
 }
 
 section[data-testid="stSidebar"] p, 
@@ -114,66 +121,68 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* HUD Corner Accents for Inputs and Cards */
+/* 3. Orbiting Laser Border Beam on Inputs & TextAreas */
 .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-    background-color: rgba(15, 23, 42, 0.7) !important;
-    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    background-color: rgba(13, 19, 38, 0.8) !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
     border-left: 3px solid #38bdf8 !important;
     color: #f8fafc !important;
     transition: all 0.3s ease-in-out !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
+    backdrop-filter: blur(8px);
 }
 .stTextInput input:hover, .stTextArea textarea:hover, .stSelectbox div[data-baseweb="select"]:hover {
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
+    border-color: #c084fc !important;
+    box-shadow: 0 0 20px rgba(192, 132, 252, 0.4) !important;
     transform: translateY(-2px);
 }
 
 /* Cyberpunk Modular Tabs Styling */
 div[data-baseweb="tab-list"] {
-    gap: 6px;
-    background: rgba(15, 23, 42, 0.6);
-    padding: 6px;
-    border-radius: 10px;
-    border: 1px solid rgba(56, 189, 248, 0.2);
+    gap: 8px;
+    background: rgba(9, 13, 26, 0.75);
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    backdrop-filter: blur(12px);
 }
 div[data-baseweb="tab"] {
     background-color: transparent !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     color: #94a3b8 !important;
     font-family: 'Orbitron', sans-serif !important;
     font-size: 11px !important;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 div[data-baseweb="tab"][aria-selected="true"] {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
     color: #38bdf8 !important;
     border: 1px solid #38bdf8 !important;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
 }
 
-/* Glowing Neon Buttons */
+/* Glowing Neon Buttons with Holographic Gradient */
 .stButton > button {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
     color: #38bdf8;
-    border: 1px solid #6366f1;
+    border: 1px solid #818cf8;
     border-radius: 8px;
     font-family: 'Orbitron', sans-serif;
     font-size: 13px;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 15px rgba(129, 140, 248, 0.35);
     transition: all 0.3s ease;
 }
 .stButton > button:hover {
-    box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
+    box-shadow: 0 0 28px rgba(56, 189, 248, 0.8);
     border-color: #38bdf8;
     color: #ffffff;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 /* Radar Pulse Animation Keyframes */
 @keyframes radar-pulse {
     0% { transform: scale(0.95); opacity: 0.8; }
-    50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #4ade80; }
+    50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 15px #4ade80; }
     100% { transform: scale(0.95); opacity: 0.8; }
 }
 .radar-beacon {
@@ -189,19 +198,20 @@ div[data-baseweb="tab"][aria-selected="true"] {
 /* Equalizer Bars Keyframes */
 @keyframes eq-bar {
     0%, 100% { height: 4px; }
-    50% { height: 14px; }
+    50% { height: 16px; }
 }
 .eq-container {
     display: inline-flex;
     align-items: flex-end;
     gap: 2px;
-    height: 14px;
+    height: 16px;
     margin-left: 8px;
 }
 .eq-bar {
     width: 3px;
-    background-color: #38bdf8;
+    background: linear-gradient(to top, #38bdf8, #c084fc);
     animation: eq-bar 0.8s infinite ease-in-out;
+    border-radius: 2px;
 }
 .eq-bar:nth-child(1) { animation-delay: 0.1s; }
 .eq-bar:nth-child(2) { animation-delay: 0.3s; }
@@ -216,19 +226,18 @@ div[data-baseweb="tab"][aria-selected="true"] {
 """
 st.markdown(futuristic_style, unsafe_allow_html=True)
 
-# --- ANIMATED CANVAS PARTICLES & SOUND EFFECTS (JS INTEGRATION) ---
+# --- SCI-FI UI SOUND FX (JS INTEGRATION) ---
 cyber_js = """
 <script>
-// Sci-Fi UI Click Audio Feedback
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSciFiClick() {
     if (audioCtx.state === 'suspended') { audioCtx.resume(); }
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.05);
-    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(450, audioCtx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -273,7 +282,7 @@ if "user" in query_params and query_params["user"]:
 # Login Screen if not logged in
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
-    st.markdown("### Please sign in to access your futuristic AI assistant")
+    st.markdown("### Please sign in to access the world's most beautiful AI assistant")
     
     login_tab1, login_tab2 = st.tabs(["🔴 Sign in with Google", "✍️ Manual Sign In"])
     
@@ -326,7 +335,7 @@ if not st.session_state.logged_in:
 
 # Greeting the user + Logout Button in Sidebar
 st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Neural Particle Grid, Sound FX, Decryption Engine, and Equalizer HUD!")
+st.markdown("Your ultimate assistant with Aurora Borealis Gradients, Sound FX, and Holographic HUD!")
 
 if st.sidebar.button("🚪 Log Out"):
     st.session_state.logged_in = False
@@ -361,10 +370,10 @@ if api_key:
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
 
-# --- HUD TELEMETRY PANEL WITH EQUALIZER BARS & RADAR IN SIDEBAR ---
+# --- HUD TELEMETRY PANEL WITH EQUALIZER & RADAR IN SIDEBAR ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-<div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8; border-radius: 6px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);">
+<div style="background: rgba(13, 19, 38, 0.85); border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);">
     <b>⚡ HUD TELEMETRY</b>
     <div class="eq-container">
         <div class="eq-bar"></div>
@@ -374,7 +383,7 @@ st.sidebar.markdown("""
     </div><br>
     • CORE: <span class="radar-beacon"></span><span style="color: #4ade80;">ONLINE</span><br>
     • MODEL: GEMINI-FLASH<br>
-    • ENCRYPTION: ACTIVE<br>
+    • AESTHETIC: ULTRA-HOLO<br>
     • QUERIES: {}
 </div>
 """.format(len(st.session_state.global_history)), unsafe_allow_html=True)
@@ -824,8 +833,8 @@ with tab7:
                 ax.plot(x, y, color="#38bdf8", linewidth=2)
                 ax.set_title(f"Graph of {calc_input}", color="white")
                 ax.grid(True, linestyle="--", alpha=0.5)
-                fig.patch.set_facecolor('#0f172a')
-                ax.set_facecolor('#070913')
+                fig.patch.set_facecolor('#090d1a')
+                ax.set_facecolor('#050711')
                 ax.tick_params(colors='white')
                 ax.xaxis.label.set_color('white')
                 ax.yaxis.label.set_color('white')
