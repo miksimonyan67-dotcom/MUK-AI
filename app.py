@@ -28,7 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ADVANCED FUTURISTIC CYBERPUNK & HOLOGRAPHIC DESIGN ---
+# --- ADVANCED FUTURISTIC CYBERPUNK & HOLOGRAPHIC DESIGN OVERHAUL ---
 futuristic_style = """
 <style>
 /* Import Sci-Fi Fonts */
@@ -62,13 +62,14 @@ div[class*="viewerBadge"] { display: none !important; }
     z-index: 999999 !important;
 }
 
-/* Dark Sci-Fi Cyber-Grid Background */
+/* 1. Dark Sci-Fi Cyber-Grid Background & Faint CRT Scanline Effect */
 .stApp {
     background-color: #070913;
     background-image: 
         linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
-    background-size: 30px 30px;
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 30px 30px, 30px 30px, 100% 4px;
     color: #e2e8f0;
     font-family: 'Share Tech Mono', monospace;
 }
@@ -77,6 +78,24 @@ div[class*="viewerBadge"] { display: none !important; }
 h1, h2, h3 {
     font-family: 'Orbitron', sans-serif !important;
     letter-spacing: 1px;
+}
+
+/* 2. Custom Neon Glowing Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #070913;
+}
+::-webkit-scrollbar-thumb {
+    background: #38bdf8;
+    border-radius: 3px;
+    box-shadow: 0 0 10px #38bdf8;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #818cf8;
+    box-shadow: 0 0 15px #818cf8;
 }
 
 /* Glassmorphism Sidebar */
@@ -95,12 +114,43 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* Holographic Glass Containers / Cards */
-div.stTabs [data-baseweb="tab-panel"], div[data-testid="stVerticalBlock"] > div {
-    backdrop-filter: blur(8px);
+/* 3D Lift & Neon Glow on Hover for Inputs and Cards */
+.stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+    background-color: rgba(15, 23, 42, 0.7) !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    color: #f8fafc !important;
+    transition: all 0.3s ease-in-out !important;
+}
+.stTextInput input:hover, .stTextArea textarea:hover, .stSelectbox div[data-baseweb="select"]:hover {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
+    transform: translateY(-2px);
 }
 
-/* Glowing Neon Accent Buttons with Pulse */
+/* 5. Cyberpunk Modular Tabs Styling */
+div[data-baseweb="tab-list"] {
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+}
+div[data-baseweb="tab"] {
+    background-color: transparent !important;
+    border-radius: 6px !important;
+    color: #94a3b8 !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 11px !important;
+    transition: all 0.2s ease;
+}
+div[data-baseweb="tab"][aria-selected="true"] {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
+    color: #38bdf8 !important;
+    border: 1px solid #38bdf8 !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+/* Glowing Neon Buttons */
 .stButton > button {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
     color: #38bdf8;
@@ -111,12 +161,27 @@ div.stTabs [data-baseweb="tab-panel"], div[data-testid="stVerticalBlock"] > div 
     box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
     transition: all 0.3s ease;
 }
-
 .stButton > button:hover {
     box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
     border-color: #38bdf8;
     color: #ffffff;
     transform: translateY(-1px);
+}
+
+/* 3. Radar Pulse Animation Keyframes */
+@keyframes radar-pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #4ade80; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+.radar-beacon {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #4ade80;
+    border-radius: 50%;
+    animation: radar-pulse 1.8s infinite ease-in-out;
+    margin-right: 6px;
 }
 
 /* Padding adjustments */
@@ -243,12 +308,12 @@ if api_key:
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
 
-# --- HUD TELEMETRY PANEL IN SIDEBAR ---
+# --- HUD TELEMETRY PANEL WITH RADAR PULSE IN SIDEBAR ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-<div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #38bdf8; border-radius: 6px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8;">
+<div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8; border-radius: 6px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);">
     <b>⚡ HUD TELEMETRY</b><br>
-    • CORE: <span style="color: #4ade80;">ONLINE</span><br>
+    • CORE: <span class="radar-beacon"></span><span style="color: #4ade80;">ONLINE</span><br>
     • MODEL: GEMINI-FLASH<br>
     • ENCRYPTION: SECURE<br>
     • QUERIES: {}
