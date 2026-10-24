@@ -34,26 +34,13 @@ futuristic_style = """
 /* Import Sci-Fi Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
 
-/* Hide default footers, status widgets, and viewer badges */
+/* Hide default footers and viewer badges */
 footer { visibility: hidden !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
 .stDeployButton { display: none !important; }
 div[class*="viewerBadge"] { display: none !important; }
 
-/* Hide ONLY top-right toolbar action buttons while leaving left >> toggle intact */
-[data-testid="stToolbar"] button,
-[data-testid="stToolbar"] a,
-[data-testid="stHeader"] a[href*="github"] {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-/* Header transparency */
-[data-testid="stHeader"] {
-    background-color: transparent !important;
-}
-
-/* FORCE the top-left sidebar toggle button (>>) to be fully visible and glowing */
+/* Keep sidebar toggle button (>>) fully visible and glowing */
 [data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
@@ -121,7 +108,7 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* 3. Orbiting Laser Border Beam on Inputs & TextAreas */
+/* Orbiting Laser Border Beam on Inputs & TextAreas */
 .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
     background-color: rgba(13, 19, 38, 0.8) !important;
     border: 1px solid rgba(56, 189, 248, 0.4) !important;
@@ -139,12 +126,15 @@ section[data-testid="stSidebar"] h3 {
 
 /* Cyberpunk Modular Tabs Styling */
 div[data-baseweb="tab-list"] {
+    display: flex !important;
+    visibility: visible !important;
     gap: 8px;
     background: rgba(9, 13, 26, 0.75);
     padding: 8px;
     border-radius: 12px;
     border: 1px solid rgba(56, 189, 248, 0.25);
     backdrop-filter: blur(12px);
+    overflow-x: auto !important;
 }
 div[data-baseweb="tab"] {
     background-color: transparent !important;
@@ -153,6 +143,7 @@ div[data-baseweb="tab"] {
     font-family: 'Orbitron', sans-serif !important;
     font-size: 11px !important;
     transition: all 0.3s ease;
+    white-space: nowrap !important;
 }
 div[data-baseweb="tab"][aria-selected="true"] {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
@@ -218,7 +209,6 @@ div[data-baseweb="tab"][aria-selected="true"] {
 .eq-bar:nth-child(3) { animation-delay: 0.2s; }
 .eq-bar:nth-child(4) { animation-delay: 0.4s; }
 
-/* Padding adjustments */
 .block-container {
     padding-top: 2rem !important;
 }
@@ -387,6 +377,13 @@ st.sidebar.markdown("""
     • QUERIES: {}
 </div>
 """.format(len(st.session_state.global_history)), unsafe_allow_html=True)
+
+# Sidebar Avatar Selector
+st.sidebar.markdown("---")
+st.sidebar.subheader("👤 User Avatar Style")
+user_avatar_choice = st.sidebar.radio("Choose Avatar", ["👦 AI Boy", "👧 AI Girl"], index=0)
+user_avatar_icon = "👨‍💻" if "Boy" in user_avatar_choice else "👩‍💻"
+bot_avatar_icon = "🤖"
 
 # Sidebar Language Switcher
 st.sidebar.markdown("---")
@@ -765,16 +762,17 @@ with tab6:
         st.session_state.chat_messages = []
         
     for message in st.session_state.chat_messages:
-        with st.chat_message(message["role"]):
+        curr_avatar = user_avatar_icon if message["role"] == "user" else bot_avatar_icon
+        with st.chat_message(message["role"], avatar=curr_avatar):
             st.markdown(message["content"])
             
     if chat_input := st.chat_input("Ask Muk AI anything..."):
         st.session_state.chat_messages.append({"role": "user", "content": chat_input})
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar=user_avatar_icon):
             st.markdown(chat_input)
             
         if client:
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar=bot_avatar_icon):
                 with st.spinner("Thinking..."):
                     try:
                         history_payload = []
