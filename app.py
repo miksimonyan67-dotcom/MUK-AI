@@ -170,45 +170,6 @@ div[data-baseweb="tab"][aria-selected="true"] {
     transform: translateY(-2px);
 }
 
-/* Radar Pulse Animation Keyframes */
-@keyframes radar-pulse {
-    0% { transform: scale(0.95); opacity: 0.8; }
-    50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 15px #4ade80; }
-    100% { transform: scale(0.95); opacity: 0.8; }
-}
-.radar-beacon {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: #4ade80;
-    border-radius: 50%;
-    animation: radar-pulse 1.8s infinite ease-in-out;
-    margin-right: 6px;
-}
-
-/* Equalizer Bars Keyframes */
-@keyframes eq-bar {
-    0%, 100% { height: 4px; }
-    50% { height: 16px; }
-}
-.eq-container {
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 2px;
-    height: 16px;
-    margin-left: 8px;
-}
-.eq-bar {
-    width: 3px;
-    background: linear-gradient(to top, #38bdf8, #c084fc);
-    animation: eq-bar 0.8s infinite ease-in-out;
-    border-radius: 2px;
-}
-.eq-bar:nth-child(1) { animation-delay: 0.1s; }
-.eq-bar:nth-child(2) { animation-delay: 0.3s; }
-.eq-bar:nth-child(3) { animation-delay: 0.2s; }
-.eq-bar:nth-child(4) { animation-delay: 0.4s; }
-
 .block-container {
     padding-top: 2rem !important;
 }
@@ -359,24 +320,6 @@ if api_key:
 # Initialize Global History
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
-
-# --- HUD TELEMETRY PANEL WITH EQUALIZER & RADAR IN SIDEBAR ---
-st.sidebar.markdown("---")
-st.sidebar.markdown("""
-<div style="background: rgba(13, 19, 38, 0.85); border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);">
-    <b>⚡ HUD TELEMETRY</b>
-    <div class="eq-container">
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-    </div><br>
-    • CORE: <span class="radar-beacon"></span><span style="color: #4ade80;">ONLINE</span><br>
-    • MODEL: GEMINI-3.8-FLASH<br>
-    • AESTHETIC: ULTRA-HOLO<br>
-    • QUERIES: {}
-</div>
-""".format(len(st.session_state.global_history)), unsafe_allow_html=True)
 
 # Sidebar Avatar Selector
 st.sidebar.markdown("---")
