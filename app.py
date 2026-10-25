@@ -108,13 +108,12 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* Orbiting Laser Border Beam on Inputs & TextAreas */
-.stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-    background-color: rgba(13, 19, 38, 0.8) !important;
+/* 3. Force Dark Cyberpunk Styling on ALL Input Boxes & Chat Input Across Every Computer */
+.stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
+    background-color: rgba(13, 19, 38, 0.9) !important;
     border: 1px solid rgba(56, 189, 248, 0.4) !important;
     border-left: 3px solid #38bdf8 !important;
     color: #f8fafc !important;
-    transition: all 0.3s ease-in-out !important;
     border-radius: 6px !important;
     backdrop-filter: blur(8px);
 }
@@ -122,6 +121,22 @@ section[data-testid="stSidebar"] h3 {
     border-color: #c084fc !important;
     box-shadow: 0 0 20px rgba(192, 132, 252, 0.4) !important;
     transform: translateY(-2px);
+}
+
+/* Chat Input Box Universal Dark Styling */
+[data-testid="stChatInput"], [data-testid="stChatInput"] div[data-baseweb="base-input"] {
+    background-color: rgba(13, 19, 38, 0.95) !important;
+    border: 1px solid rgba(56, 189, 248, 0.5) !important;
+    border-radius: 8px !important;
+    color: #f8fafc !important;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+}
+[data-testid="stChatInput"] textarea {
+    background-color: transparent !important;
+    color: #f8fafc !important;
+}
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #94a3b8 !important;
 }
 
 /* Cyberpunk Modular Tabs Styling */
@@ -391,12 +406,12 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13
 ])
 
 def safe_generate(client_obj, contents):
-    models_to_try = ["gemini-3.8-flash"]
+    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
     last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     
     for model_id in models_to_try:
-        for attempt in range(4):
+        for attempt in range(3):
             try:
                 response = client_obj.models.generate_content(
                     model=model_id, 
@@ -407,15 +422,15 @@ def safe_generate(client_obj, contents):
             except Exception as err:
                 last_error = err
                 err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
-                    time.sleep(2.0 * (attempt + 1))
+                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
+                    time.sleep(1.5 * (attempt + 1))
                     continue
                 else:
                     break
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
-    models_to_try = ["gemini-3.8-flash"]
+    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
     last_error = None
     config = types.GenerateContentConfig(
         response_modalities=["IMAGE", "TEXT"],
@@ -423,7 +438,7 @@ def safe_generate_image(client_obj, prompt_text):
     )
     
     for model_id in models_to_try:
-        for attempt in range(4):
+        for attempt in range(3):
             try:
                 response = client_obj.models.generate_content(
                     model=model_id,
@@ -434,8 +449,8 @@ def safe_generate_image(client_obj, prompt_text):
             except Exception as err:
                 last_error = err
                 err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg:
-                    time.sleep(2.5 * (attempt + 1))
+                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
+                    time.sleep(2.0 * (attempt + 1))
                     continue
                 else:
                     break
