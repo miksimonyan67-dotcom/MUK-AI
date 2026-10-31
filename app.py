@@ -343,10 +343,28 @@ user_avatar_choice = st.sidebar.radio("Choose Avatar", ["👦 AI Boy", "👧 AI 
 user_avatar_icon = "👨‍💻" if "Boy" in user_avatar_choice else "👩‍💻"
 bot_avatar_icon = "🤖"
 
-# Sidebar Language Switcher
+# --- GLOBAL WORLD LANGUAGES LIST ---
+WORLD_LANGUAGES = [
+    "English", "Հայերեն (Armenian)", "Русский (Russian)", "Español (Spanish)", 
+    "Français (French)", "Deutsch (German)", "Chinese (Mandarin / 简体中文)", 
+    "Arabic (العربية)", "Portuguese (Português)", "Japanese (日本語)", 
+    "Hindi (हिन्दी)", "Korean (한국어)", "Italiano (Italian)", "Turkish (Türkçe)", 
+    "Dutch (Nederlands)", "Greek (Ελληνικά)", "Polish (Polski)", "Persian (فارسی)", 
+    "Hebrew (עברית)", "Swedish (Svenska)", "Ukrainian (Українська)", "Czech (Čeština)", 
+    "Vietnamese (Tiếng Việt)", "Thai (ไทย)", "Indonesian (Bahasa Indonesia)", 
+    "Bengali (বাংলা)", "Urdu (اردو)", "Swahili (Kiswahili)", "Custom / Other Language..."
+]
+
+# Sidebar Global Language Switcher
 st.sidebar.markdown("---")
-st.sidebar.subheader("🌐 Language Settings")
-selected_language = st.sidebar.selectbox("Choose Language / Ընտրել լեզուն", ["English", "Հայերեն", "Русский"])
+st.sidebar.subheader("🌐 Global Language Settings")
+sel_lang_sidebar = st.sidebar.selectbox("Choose AI Output Language", WORLD_LANGUAGES, index=0)
+
+if sel_lang_sidebar == "Custom / Other Language...":
+    custom_lang = st.sidebar.text_input("Enter Any World Language Name", placeholder="e.g., Georgian, Basque, Esperanto...")
+    selected_language = custom_lang if custom_lang.strip() else "English"
+else:
+    selected_language = sel_lang_sidebar
 
 # Sidebar Voice Settings Toggle
 st.sidebar.markdown("---")
@@ -829,15 +847,28 @@ with tab8:
 
 # --- TAB 9: SMART MULTILINGUAL TRANSLATOR ---
 with tab9:
-    st.header("🔤 Contextual Multilingual Translator")
-    st.write("Translate text while preserving context, idioms, and natural speaking tone.")
+    st.header("🔤 Universal Multilingual Translator")
+    st.write("Translate text into any language in the world while preserving context, idioms, and natural tone.")
     
     trans_text = st.text_input("Enter text to translate", placeholder="e.g., How are you doing today?", key="trans_box")
+    
+    trans_src_options = ["Auto-Detect"] + WORLD_LANGUAGES
+    trans_target_options = WORLD_LANGUAGES
+    
     col_t1, col_t2 = st.columns(2)
     with col_t1:
-        src_lang = st.selectbox("From Language", ["Auto-Detect", "English", "Armenian", "Russian"], key="src_lang")
+        src_lang_sel = st.selectbox("From Language", trans_src_options, index=0, key="src_lang")
+        if src_lang_sel == "Custom / Other Language...":
+            src_lang_final = st.text_input("Specify From Language", placeholder="e.g., Latin, Georgian...", key="src_lang_custom")
+        else:
+            src_lang_final = src_lang_sel
+            
     with col_t2:
-        target_lang = st.selectbox("To Language", ["Armenian", "English", "Russian", "French", "German", "Spanish"], key="target_lang")
+        target_lang_sel = st.selectbox("To Language", trans_target_options, index=1, key="target_lang") # default Armenian
+        if target_lang_sel == "Custom / Other Language...":
+            target_lang_final = st.text_input("Specify To Language", placeholder="e.g., Basque, Kurdish...", key="target_lang_custom")
+        else:
+            target_lang_final = target_lang_sel
         
     if st.button("Translate with Context"):
         if not client:
@@ -845,7 +876,7 @@ with tab9:
         elif trans_text:
             with st.spinner("Translating..."):
                 try:
-                    prompt = f"Translate the following text from {src_lang} to {target_lang}. Preserve exact natural context and explain any idioms or cultural nuances if present: {trans_text}"
+                    prompt = f"Translate the following text from {src_lang_final} to {target_lang_final}. Preserve exact natural context and explain any idioms or cultural nuances if present: {trans_text}"
                     response = safe_generate(client, prompt)
                     st.session_state.global_history.append(f"Translation: {trans_text[:30]}")
                     st.success("Translation:")
