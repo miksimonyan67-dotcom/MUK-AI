@@ -6,21 +6,21 @@ from PIL import Image
 from google import genai
 from google.genai import types
 
-# PDF Reading & Generation
+
 from pypdf import PdfReader
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-# PowerPoint (.pptx) Generation
+
 from pptx import Presentation
 from pptx.util import Inches, Pt
 
-# Math Graphing
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Configure Muk AI Page
+
 st.set_page_config(
     page_title="Muk AI - Ultimate AI Assistant",
     page_icon="🤖",
@@ -28,19 +28,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- WORLD-CLASS HOLOGRAPHIC CYBERPUNK & AURORA DESIGN SYSTEM ---
+
 futuristic_style = """
 <style>
-/* Import Sci-Fi Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
 
-/* Hide default footers and viewer badges */
+
 footer { visibility: hidden !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
 .stDeployButton { display: none !important; }
 div[class*="viewerBadge"] { display: none !important; }
 
-/* Keep sidebar toggle button (>>) fully visible and glowing */
+
 [data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
@@ -49,7 +48,7 @@ div[class*="viewerBadge"] { display: none !important; }
     z-index: 999999 !important;
 }
 
-/* 1. Deep Space Aurora Borealis Background & CRT Scanlines */
+
 .stApp {
     background-color: #050711;
     background-image: 
@@ -63,7 +62,7 @@ div[class*="viewerBadge"] { display: none !important; }
     font-family: 'Share Tech Mono', monospace;
 }
 
-/* 2. Shimmering Neon Gradient Titles */
+
 h1, h2, h3 {
     font-family: 'Orbitron', sans-serif !important;
     background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
@@ -73,7 +72,7 @@ h1, h2, h3 {
     text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
 }
 
-/* Custom Neon Glowing Scrollbars */
+
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -91,7 +90,7 @@ h1, h2, h3 {
     box-shadow: 0 0 18px #c084fc;
 }
 
-/* Glassmorphism Sidebar with Aurora Glow */
+
 section[data-testid="stSidebar"] {
     background-color: rgba(9, 13, 26, 0.92);
     backdrop-filter: blur(16px);
@@ -108,7 +107,7 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* 3. Force Dark Cyberpunk Styling on ALL Input Boxes & Chat Input Across Every Computer */
+
 .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
     background-color: rgba(13, 19, 38, 0.9) !important;
     border: 1px solid rgba(56, 189, 248, 0.4) !important;
@@ -123,7 +122,7 @@ section[data-testid="stSidebar"] h3 {
     transform: translateY(-2px);
 }
 
-/* Chat Input Box Universal Dark Styling */
+
 [data-testid="stChatInput"], [data-testid="stChatInput"] div[data-baseweb="base-input"] {
     background-color: rgba(13, 19, 38, 0.95) !important;
     border: 1px solid rgba(56, 189, 248, 0.5) !important;
@@ -139,7 +138,7 @@ section[data-testid="stSidebar"] h3 {
     color: #94a3b8 !important;
 }
 
-/* Cyberpunk Modular Tabs Styling */
+
 div[data-baseweb="tab-list"] {
     display: flex !important;
     visibility: visible !important;
@@ -167,7 +166,7 @@ div[data-baseweb="tab"][aria-selected="true"] {
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
 }
 
-/* Glowing Neon Buttons with Holographic Gradient */
+
 .stButton > button {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
     color: #38bdf8;
@@ -192,7 +191,7 @@ div[data-baseweb="tab"][aria-selected="true"] {
 """
 st.markdown(futuristic_style, unsafe_allow_html=True)
 
-# --- SCI-FI UI SOUND FX (JS INTEGRATION) ---
+
 cyber_js = """
 <script>
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -220,7 +219,7 @@ document.addEventListener('click', (e) => {
 """
 components.html(cyber_js, height=0, width=0)
 
-# --- BROWSER-BASED PERSISTENT LOGIN HANDLER ---
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_name" not in st.session_state:
@@ -245,7 +244,7 @@ if "user" in query_params and query_params["user"]:
     st.session_state.user_name = query_params["user"]
     st.session_state.logged_in = True
 
-# Login Screen if not logged in
+
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
     st.markdown("### Please sign in to access the world's most beautiful AI assistant")
@@ -299,7 +298,7 @@ if not st.session_state.logged_in:
                     st.warning("⚠️ Please enter both your name and surname to continue.")
     st.stop()
 
-# Greeting the user + Logout Button in Sidebar
+
 st.title(f"Hello, {st.session_state.user_name}!")
 st.markdown("Your ultimate assistant with Aurora Borealis Gradients, Sound FX, and Holographic HUD!")
 
@@ -318,7 +317,7 @@ if st.sidebar.button("🚪 Log Out"):
     components.html(clear_js, height=0, width=0)
     st.rerun()
 
-# API Key backend configuration via Streamlit Secrets
+
 api_key = None
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -332,18 +331,18 @@ if api_key:
     except Exception as e:
         st.error(f"Configuration error: {e}")
 
-# Initialize Global History
+
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
 
-# Sidebar Avatar Selector
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("👤 User Avatar Style")
 user_avatar_choice = st.sidebar.radio("Choose Avatar", ["👦 AI Boy", "👧 AI Girl"], index=0)
 user_avatar_icon = "👨‍💻" if "Boy" in user_avatar_choice else "👩‍💻"
 bot_avatar_icon = "🤖"
 
-# --- GLOBAL WORLD LANGUAGES LIST ---
+
 WORLD_LANGUAGES = [
     "English", "Հայերեն (Armenian)", "Русский (Russian)", "Español (Spanish)", 
     "Français (French)", "Deutsch (German)", "Chinese (Mandarin / 简体中文)", 
@@ -355,7 +354,7 @@ WORLD_LANGUAGES = [
     "Bengali (বাংলা)", "Urdu (اردو)", "Swahili (Kiswahili)", "Custom / Other Language..."
 ]
 
-# Sidebar Global Language Switcher
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("🌐 Global Language Settings")
 sel_lang_sidebar = st.sidebar.selectbox("Choose AI Output Language", WORLD_LANGUAGES, index=0)
@@ -366,12 +365,12 @@ if sel_lang_sidebar == "Custom / Other Language...":
 else:
     selected_language = sel_lang_sidebar
 
-# Sidebar Voice Settings Toggle
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔊 Audio Settings")
 enable_natural_voice = st.sidebar.toggle("Enable Natural Voice 🔊", value=True)
 
-# Sidebar History Log Display
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("📜 Recent History")
 if st.session_state.global_history:
@@ -383,7 +382,7 @@ if st.session_state.global_history:
 else:
     st.sidebar.write("No questions asked yet.")
 
-# Voice synthesizer
+
 def speak_natural_voice(text_to_speak):
     if enable_natural_voice:
         clean_text = text_to_speak.replace('"', "'").replace('\n', ' ')
@@ -406,11 +405,10 @@ You are Muk AI, a multi-functional AI assistant.
 2. Always formulate all your output responses in the following language: {selected_language}.
 """
 
-# Navigation Tabs (13 tabs total)
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13 = st.tabs([
+
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "📚 Homework", 
     "✍️ Essay", 
-    "🔍 Verifier", 
     "📊 Presentation", 
     "🎨 Visuals", 
     "💬 Muk Chat",
@@ -419,8 +417,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13
     "🔤 Translator",
     "📅 Study Planner",
     "🧪 Science & STEM",
-    "✉️ Email Writer",
-    "💡 Idea Lab"
+    "✉️ Email Writer"
 ])
 
 def safe_generate(client_obj, contents):
@@ -541,7 +538,7 @@ def create_image_pdf(image_bytes, prompt_text):
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
 
-# --- TAB 1: HOMEWORK HELPER ---
+
 with tab1:
     st.header("Homework Helper")
     st.write("Ask questions by typing, uploading an image/PDF document, or recording your voice!")
@@ -588,7 +585,7 @@ with tab1:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-# --- TAB 2: ESSAY WRITER ---
+
 with tab2:
     st.header("Essay & Text Writer")
     st.write("Generate well-structured essays, paragraphs, or summaries.")
@@ -614,44 +611,8 @@ with tab2:
         else:
             st.warning("Please enter a topic.")
 
-# --- TAB 3: ANSWER VERIFIER ---
-with tab3:
-    st.header("Answer Verifier")
-    st.write("Check your answers or verify text generated from other AIs to make sure they are accurate.")
-    question_to_verify = st.text_input("Original Question", placeholder="e.g., What is the capital of Australia?", key="ver_q")
-    answer_to_verify = st.text_area("Answer to Verify", placeholder="Paste the answer here...", key="ver_a")
-    verify_image = st.file_uploader("Upload Answer Image or PDF (optional)", type=["png", "jpg", "jpeg", "pdf"], key="ver_img")
-    
-    if st.button("Verify Answer"):
-        if not client:
-            st.error("API client not initialized.")
-        elif question_to_verify or answer_to_verify or verify_image:
-            with st.spinner("Muk AI is verifying..."):
-                try:
-                    pdf_text = ""
-                    if verify_image and verify_image.type == "application/pdf":
-                        pdf_text = extract_pdf_text(verify_image)
-                    
-                    prompt = f"Verify the following answer for accuracy. Question: {question_to_verify}\nAnswer to check: {answer_to_verify}"
-                    if pdf_text:
-                        prompt += f"\nDocument Context:\n{pdf_text[:3000]}"
-                        
-                    payload = [prompt]
-                    if verify_image and verify_image.type != "application/pdf":
-                        payload.append(Image.open(verify_image))
-                        
-                    response = safe_generate(client, payload)
-                    st.session_state.global_history.append(f"Verify: {question_to_verify[:40] if question_to_verify else 'Document'}")
-                    st.success("Verification Report:")
-                    st.write(response.text)
-                    speak_natural_voice("Verification report is ready!")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        else:
-            st.warning("Please provide details or a file to verify.")
 
-# --- TAB 4: PRESENTATION MAKER ---
-with tab4:
+with tab3:
     st.header("📊 Presentation Maker")
     st.write("Generate complete presentations and download them as text or actual PowerPoint (.pptx) files!")
     pres_topic = st.text_input("Presentation Topic", placeholder="e.g., History of Space Exploration or AI", key="pres_top")
@@ -684,8 +645,8 @@ with tab4:
         else:
             st.warning("Please enter a presentation topic.")
 
-# --- TAB 5: VISUALS (PICTURE & VIDEO CREATOR) ---
-with tab5:
+
+with tab4:
     st.header("🎨 Picture & Video Creator")
     st.write("Generate stunning images and download them as high-quality PDF assets!")
     img_prompt = st.text_input("Image Description / Prompt", placeholder="e.g., A futuristic cyberpunk city in Armenia, digital art", key="img_prompt_input")
@@ -727,10 +688,17 @@ with tab5:
         else:
             st.warning("Please enter a description for your image.")
 
-# --- TAB 6: MUK CHAT ---
-with tab6:
+
+with tab5:
     st.header("💬 Muk AI Chat")
     st.write("Chat freely with your personal AI assistant.")
+    
+    # Quick Assistant Mode Dropdown Selector (with arrow style)
+    chat_mode = st.selectbox(
+        "🤖 Select Chat Assistant Mode",
+        ["General Chat", "Homework", "Essay", "Calculator", "Science & STEM", "Email Writer"],
+        key="chat_mode_dropdown"
+    )
     
     web_search_toggle = st.toggle("🌐 Enable Web Research Mode", value=False)
     
@@ -742,10 +710,15 @@ with tab6:
         with st.chat_message(message["role"], avatar=curr_avatar):
             st.markdown(message["content"])
             
-    if chat_input := st.chat_input("Ask Muk AI anything..."):
-        st.session_state.chat_messages.append({"role": "user", "content": chat_input})
+    if chat_input := st.chat_input(f"Ask Muk AI ({chat_mode} Mode)..."):
+        # Prepend mode context if specialized mode selected
+        actual_input = chat_input
+        if chat_mode != "General Chat":
+            actual_input = f"[{chat_mode} Mode Request]: {chat_input}"
+            
+        st.session_state.chat_messages.append({"role": "user", "content": actual_input})
         with st.chat_message("user", avatar=user_avatar_icon):
-            st.markdown(chat_input)
+            st.markdown(actual_input)
             
         if client:
             with st.chat_message("assistant", avatar=bot_avatar_icon):
@@ -760,13 +733,13 @@ with tab6:
                         reply = response.text
                         st.markdown(reply)
                         st.session_state.chat_messages.append({"role": "assistant", "content": reply})
-                        st.session_state.global_history.append(f"Chat: {chat_input[:30]}...")
+                        st.session_state.global_history.append(f"Chat ({chat_mode}): {chat_input[:30]}...")
                         speak_natural_voice(reply[:200])
                     except Exception as e:
                         st.error(f"Error: {e}")
 
-# --- TAB 7: CALCULATOR & GRAPHING ---
-with tab7:
+
+with tab6:
     st.header("🧮 Smart Calculator & Graph Plotter")
     st.write("Solve math equations or plot mathematical functions visually!")
     
@@ -816,8 +789,8 @@ with tab7:
             except Exception as e:
                 st.error(f"Could not plot expression: {e}. Try entering a formula with 'x', e.g., 'x**2' or 'sin(x)'.")
 
-# --- TAB 8: EXAM PREP (QUIZZES & FLASHCARDS) ---
-with tab8:
+
+with tab7:
     st.header("🧠 Study & Exam Prep Mode")
     st.write("Generate interactive practice quizzes and digital flashcards from any topic or study notes!")
     
@@ -845,8 +818,8 @@ with tab8:
         else:
             st.warning("Please enter a topic or paste study notes.")
 
-# --- TAB 9: SMART MULTILINGUAL TRANSLATOR ---
-with tab9:
+
+with tab8:
     st.header("🔤 Universal Multilingual Translator")
     st.write("Translate text into any language in the world while preserving context, idioms, and natural tone.")
     
@@ -864,7 +837,7 @@ with tab9:
             src_lang_final = src_lang_sel
             
     with col_t2:
-        target_lang_sel = st.selectbox("To Language", trans_target_options, index=1, key="target_lang") # default Armenian
+        target_lang_sel = st.selectbox("To Language", trans_target_options, index=1, key="target_lang")
         if target_lang_sel == "Custom / Other Language...":
             target_lang_final = st.text_input("Specify To Language", placeholder="e.g., Basque, Kurdish...", key="target_lang_custom")
         else:
@@ -887,8 +860,8 @@ with tab9:
         else:
             st.warning("Please enter text to translate.")
 
-# --- TAB 10: DAILY STUDY PLANNER ---
-with tab10:
+
+with tab9:
     st.header("📅 Daily Study Planner & Schedule Creator")
     st.write("Generate customized study schedules tailored to your exams and available daily time.")
     
@@ -913,8 +886,8 @@ with tab10:
         else:
             st.warning("Please enter your subjects or topics.")
 
-# --- TAB 11: SCIENCE & STEM ASSISTANT ---
-with tab11:
+
+with tab10:
     st.header("🧪 Science & Physics STEM Assistant")
     st.write("Understand complex physics, chemistry, or biology formulas with step-by-step real-world explanations.")
     
@@ -937,8 +910,8 @@ with tab11:
         else:
             st.warning("Please enter a science question or formula.")
 
-# --- TAB 12: PROFESSIONAL EMAIL WRITER ---
-with tab12:
+
+with tab11:
     st.header("✉️ Professional Email & Letter Writer")
     st.write("Draft polite, well-phrased emails and formal requests instantly.")
     
@@ -962,30 +935,6 @@ with tab12:
         else:
             st.warning("Please enter the main purpose of your email.")
 
-# --- TAB 13: CREATIVE IDEA GENERATOR ---
-with tab13:
-    st.header("💡 Brainstorming & Idea Generator")
-    st.write("Generate creative concepts for video projects, presentations, essays, or apps.")
-    
-    idea_topic = st.text_input("What do you want ideas for?", placeholder="e.g., Creative video topic about sea painting or web app idea", key="idea_box")
-    
-    if st.button("Generate Creative Ideas"):
-        if not client:
-            st.error("API client not initialized.")
-        elif idea_topic:
-            with st.spinner("Brainstorming creative ideas..."):
-                try:
-                    prompt = f"Generate 5 unique, creative, and engaging project ideas or concepts for: {idea_topic}. Include a title, brief description, and key highlight for each idea."
-                    response = safe_generate(client, prompt)
-                    st.session_state.global_history.append(f"Idea Lab: {idea_topic[:30]}")
-                    st.success("Creative Concepts:")
-                    st.write(response.text)
-                    speak_natural_voice("Here are your creative ideas!")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        else:
-            st.warning("Please enter a topic to generate ideas.")
 
-# --- BRANDING AT THE VERY BOTTOM OF THE SIDEBAR ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
