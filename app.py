@@ -391,80 +391,33 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
+# --- ULTRA-FAST DIRECT API CALLS (ZERO DELAYS) ---
 def safe_generate(client_obj, contents):
-    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-2.0-flash"]
-    last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
-    
-    for model_id in models_to_try:
-        for attempt in range(2):
-            try:
-                response = client_obj.models.generate_content(
-                    model=model_id, 
-                    contents=contents,
-                    config=config
-                )
-                return response
-            except Exception as err:
-                last_error = err
-                err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
-                    time.sleep(1.0 * (attempt + 1))
-                    continue
-                else:
-                    break
-    raise last_error
+    return client_obj.models.generate_content(
+        model="gemini-2.5-flash", 
+        contents=contents,
+        config=config
+    )
 
 def safe_generate_stream(client_obj, contents):
-    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-2.0-flash"]
-    last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
-    
-    for model_id in models_to_try:
-        for attempt in range(2):
-            try:
-                response_stream = client_obj.models.generate_content_stream(
-                    model=model_id, 
-                    contents=contents,
-                    config=config
-                )
-                return response_stream
-            except Exception as err:
-                last_error = err
-                err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
-                    time.sleep(1.0 * (attempt + 1))
-                    continue
-                else:
-                    break
-    raise last_error
+    return client_obj.models.generate_content_stream(
+        model="gemini-2.5-flash", 
+        contents=contents,
+        config=config
+    )
 
 def safe_generate_image(client_obj, prompt_text):
-    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]
-    last_error = None
     config = types.GenerateContentConfig(
         response_modalities=["IMAGE", "TEXT"],
         system_instruction=SYSTEM_INSTRUCTION
     )
-    
-    for model_id in models_to_try:
-        for attempt in range(2):
-            try:
-                response = client_obj.models.generate_content(
-                    model=model_id,
-                    contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
-                    config=config
-                )
-                return response
-            except Exception as err:
-                last_error = err
-                err_msg = str(err).lower()
-                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
-                    time.sleep(1.5 * (attempt + 1))
-                    continue
-                else:
-                    break
-    raise last_error
+    return client_obj.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
+        config=config
+    )
 
 def extract_pdf_text(uploaded_pdf):
     reader = PdfReader(uploaded_pdf)
@@ -715,8 +668,7 @@ with tab5:
                     if web_search_toggle:
                         history_payload.append("System Notice: Provide up-to-date, comprehensive, well-researched web answers with citations where appropriate.")
                     
-                    # Keep history trimmed to last 10 messages for lightning-fast speeds
-                    for m in st.session_state.chat_messages[-10:]:
+                    for m in st.session_state.chat_messages[-8:]:
                         history_payload.append(f"{m['role'].capitalize()}: {m['content']}")
                         
                     response_stream = safe_generate_stream(client, history_payload)
