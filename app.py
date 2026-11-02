@@ -6,20 +6,15 @@ from PIL import Image
 from google import genai
 from google.genai import types
 
-
 from pypdf import PdfReader
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-
 from pptx import Presentation
-from pptx.util import Inches, Pt
-
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 st.set_page_config(
     page_title="Muk AI - Ultimate AI Assistant",
@@ -28,17 +23,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
 futuristic_style = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
-
 
 footer { visibility: hidden !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
 .stDeployButton { display: none !important; }
 div[class*="viewerBadge"] { display: none !important; }
-
 
 [data-testid="collapsedControl"] {
     display: flex !important;
@@ -47,7 +39,6 @@ div[class*="viewerBadge"] { display: none !important; }
     color: #38bdf8 !important;
     z-index: 999999 !important;
 }
-
 
 .stApp {
     background-color: #050711;
@@ -62,7 +53,6 @@ div[class*="viewerBadge"] { display: none !important; }
     font-family: 'Share Tech Mono', monospace;
 }
 
-
 h1, h2, h3 {
     font-family: 'Orbitron', sans-serif !important;
     background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
@@ -71,7 +61,6 @@ h1, h2, h3 {
     letter-spacing: 1.5px;
     text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
 }
-
 
 ::-webkit-scrollbar {
     width: 6px;
@@ -90,7 +79,6 @@ h1, h2, h3 {
     box-shadow: 0 0 18px #c084fc;
 }
 
-
 section[data-testid="stSidebar"] {
     background-color: rgba(9, 13, 26, 0.92);
     backdrop-filter: blur(16px);
@@ -107,7 +95,6 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-
 .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
     background-color: rgba(13, 19, 38, 0.9) !important;
     border: 1px solid rgba(56, 189, 248, 0.4) !important;
@@ -121,7 +108,6 @@ section[data-testid="stSidebar"] h3 {
     box-shadow: 0 0 20px rgba(192, 132, 252, 0.4) !important;
     transform: translateY(-2px);
 }
-
 
 [data-testid="stChatInput"], [data-testid="stChatInput"] div[data-baseweb="base-input"] {
     background-color: rgba(13, 19, 38, 0.95) !important;
@@ -137,7 +123,6 @@ section[data-testid="stSidebar"] h3 {
 [data-testid="stChatInput"] textarea::placeholder {
     color: #94a3b8 !important;
 }
-
 
 div[data-baseweb="tab-list"] {
     display: flex !important;
@@ -166,7 +151,6 @@ div[data-baseweb="tab"][aria-selected="true"] {
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
 }
 
-
 .stButton > button {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
     color: #38bdf8;
@@ -190,7 +174,6 @@ div[data-baseweb="tab"][aria-selected="true"] {
 </style>
 """
 st.markdown(futuristic_style, unsafe_allow_html=True)
-
 
 cyber_js = """
 <script>
@@ -219,7 +202,6 @@ document.addEventListener('click', (e) => {
 """
 components.html(cyber_js, height=0, width=0)
 
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_name" not in st.session_state:
@@ -243,7 +225,6 @@ query_params = st.query_params
 if "user" in query_params and query_params["user"]:
     st.session_state.user_name = query_params["user"]
     st.session_state.logged_in = True
-
 
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
@@ -298,7 +279,6 @@ if not st.session_state.logged_in:
                     st.warning("⚠️ Please enter both your name and surname to continue.")
     st.stop()
 
-
 st.title(f"Hello, {st.session_state.user_name}!")
 st.markdown("Your ultimate assistant with Aurora Borealis Gradients, Sound FX, and Holographic HUD!")
 
@@ -317,7 +297,6 @@ if st.sidebar.button("🚪 Log Out"):
     components.html(clear_js, height=0, width=0)
     st.rerun()
 
-
 api_key = None
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -331,17 +310,14 @@ if api_key:
     except Exception as e:
         st.error(f"Configuration error: {e}")
 
-
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
-
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("👤 User Avatar Style")
 user_avatar_choice = st.sidebar.radio("Choose Avatar", ["👦 AI Boy", "👧 AI Girl"], index=0)
 user_avatar_icon = "👨‍💻" if "Boy" in user_avatar_choice else "👩‍💻"
 bot_avatar_icon = "🤖"
-
 
 WORLD_LANGUAGES = [
     "English", "Հայերեն (Armenian)", "Русский (Russian)", "Español (Spanish)", 
@@ -354,22 +330,19 @@ WORLD_LANGUAGES = [
     "Bengali (বাংলা)", "Urdu (اردو)", "Swahili (Kiswahili)", "Custom / Other Language..."
 ]
 
-
 st.sidebar.markdown("---")
 st.sidebar.subheader("🌐 Global Language Settings")
 sel_lang_sidebar = st.sidebar.selectbox("Choose AI Output Language", WORLD_LANGUAGES, index=0)
 
 if sel_lang_sidebar == "Custom / Other Language...":
-    custom_lang = st.sidebar.text_input("Enter Any World Language Name", placeholder="e.g., Georgian, Basque, Esperanto...")
+    custom_lang = st.sidebar.text_input("Enter Any World Language Name", placeholder="e.g., Georgian, Basque...")
     selected_language = custom_lang if custom_lang.strip() else "English"
 else:
     selected_language = sel_lang_sidebar
 
-
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔊 Audio Settings")
 enable_natural_voice = st.sidebar.toggle("Enable Natural Voice 🔊", value=True)
-
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("📜 Recent History")
@@ -381,7 +354,6 @@ if st.session_state.global_history:
         st.rerun()
 else:
     st.sidebar.write("No questions asked yet.")
-
 
 def speak_natural_voice(text_to_speak):
     if enable_natural_voice:
@@ -405,7 +377,6 @@ You are Muk AI, a multi-functional AI assistant.
 2. Always formulate all your output responses in the following language: {selected_language}.
 """
 
-
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "📚 Homework", 
     "✍️ Essay", 
@@ -421,12 +392,12 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
 ])
 
 def safe_generate(client_obj, contents):
-    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
+    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-2.0-flash"]
     last_error = None
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     
     for model_id in models_to_try:
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 response = client_obj.models.generate_content(
                     model=model_id, 
@@ -438,14 +409,38 @@ def safe_generate(client_obj, contents):
                 last_error = err
                 err_msg = str(err).lower()
                 if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
-                    time.sleep(1.5 * (attempt + 1))
+                    time.sleep(1.0 * (attempt + 1))
+                    continue
+                else:
+                    break
+    raise last_error
+
+def safe_generate_stream(client_obj, contents):
+    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-2.0-flash"]
+    last_error = None
+    config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
+    
+    for model_id in models_to_try:
+        for attempt in range(2):
+            try:
+                response_stream = client_obj.models.generate_content_stream(
+                    model=model_id, 
+                    contents=contents,
+                    config=config
+                )
+                return response_stream
+            except Exception as err:
+                last_error = err
+                err_msg = str(err).lower()
+                if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
+                    time.sleep(1.0 * (attempt + 1))
                     continue
                 else:
                     break
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
-    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
+    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]
     last_error = None
     config = types.GenerateContentConfig(
         response_modalities=["IMAGE", "TEXT"],
@@ -453,7 +448,7 @@ def safe_generate_image(client_obj, prompt_text):
     )
     
     for model_id in models_to_try:
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 response = client_obj.models.generate_content(
                     model=model_id,
@@ -465,7 +460,7 @@ def safe_generate_image(client_obj, prompt_text):
                 last_error = err
                 err_msg = str(err).lower()
                 if "503" in err_msg or "unavailable" in err_msg or "429" in err_msg or "resource_exhausted" in err_msg or "404" in err_msg or "not_found" in err_msg:
-                    time.sleep(2.0 * (attempt + 1))
+                    time.sleep(1.5 * (attempt + 1))
                     continue
                 else:
                     break
@@ -538,7 +533,6 @@ def create_image_pdf(image_bytes, prompt_text):
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
 
-
 with tab1:
     st.header("Homework Helper")
     st.write("Ask questions by typing, uploading an image/PDF document, or recording your voice!")
@@ -585,7 +579,6 @@ with tab1:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-
 with tab2:
     st.header("Essay & Text Writer")
     st.write("Generate well-structured essays, paragraphs, or summaries.")
@@ -610,7 +603,6 @@ with tab2:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic.")
-
 
 with tab3:
     st.header("📊 Presentation Maker")
@@ -644,7 +636,6 @@ with tab3:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a presentation topic.")
-
 
 with tab4:
     st.header("🎨 Picture & Video Creator")
@@ -688,14 +679,12 @@ with tab4:
         else:
             st.warning("Please enter a description for your image.")
 
-
 with tab5:
     st.header("💬 Muk AI Chat")
     st.write("Chat freely with your personal AI assistant.")
     
-    # Quick Assistant Mode Dropdown Selector (with arrow style)
     chat_mode = st.selectbox(
-        "🤖 Select Chat Assistant Mode",
+        "Gemini Auto",
         ["General Chat", "Homework", "Essay", "Calculator", "Science & STEM", "Email Writer"],
         key="chat_mode_dropdown"
     )
@@ -711,7 +700,6 @@ with tab5:
             st.markdown(message["content"])
             
     if chat_input := st.chat_input(f"Ask Muk AI ({chat_mode} Mode)..."):
-        # Prepend mode context if specialized mode selected
         actual_input = chat_input
         if chat_mode != "General Chat":
             actual_input = f"[{chat_mode} Mode Request]: {chat_input}"
@@ -722,22 +710,28 @@ with tab5:
             
         if client:
             with st.chat_message("assistant", avatar=bot_avatar_icon):
-                with st.spinner("Thinking..."):
-                    try:
-                        history_payload = []
-                        if web_search_toggle:
-                            history_payload.append("System Notice: Provide up-to-date, comprehensive, well-researched web answers with citations where appropriate.")
-                        for m in st.session_state.chat_messages:
-                            history_payload.append(f"{m['role'].capitalize()}: {m['content']}")
-                        response = safe_generate(client, history_payload)
-                        reply = response.text
-                        st.markdown(reply)
-                        st.session_state.chat_messages.append({"role": "assistant", "content": reply})
-                        st.session_state.global_history.append(f"Chat ({chat_mode}): {chat_input[:30]}...")
-                        speak_natural_voice(reply[:200])
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-
+                try:
+                    history_payload = []
+                    if web_search_toggle:
+                        history_payload.append("System Notice: Provide up-to-date, comprehensive, well-researched web answers with citations where appropriate.")
+                    
+                    # Keep history trimmed to last 10 messages for lightning-fast speeds
+                    for m in st.session_state.chat_messages[-10:]:
+                        history_payload.append(f"{m['role'].capitalize()}: {m['content']}")
+                        
+                    response_stream = safe_generate_stream(client, history_payload)
+                    
+                    def stream_generator():
+                        for chunk in response_stream:
+                            if chunk.text:
+                                yield chunk.text
+                                
+                    reply = st.write_stream(stream_generator())
+                    st.session_state.chat_messages.append({"role": "assistant", "content": reply})
+                    st.session_state.global_history.append(f"Chat ({chat_mode}): {chat_input[:30]}...")
+                    speak_natural_voice(reply[:200])
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 with tab6:
     st.header("🧮 Smart Calculator & Graph Plotter")
@@ -789,7 +783,6 @@ with tab6:
             except Exception as e:
                 st.error(f"Could not plot expression: {e}. Try entering a formula with 'x', e.g., 'x**2' or 'sin(x)'.")
 
-
 with tab7:
     st.header("🧠 Study & Exam Prep Mode")
     st.write("Generate interactive practice quizzes and digital flashcards from any topic or study notes!")
@@ -817,7 +810,6 @@ with tab7:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic or paste study notes.")
-
 
 with tab8:
     st.header("🔤 Universal Multilingual Translator")
@@ -860,7 +852,6 @@ with tab8:
         else:
             st.warning("Please enter text to translate.")
 
-
 with tab9:
     st.header("📅 Daily Study Planner & Schedule Creator")
     st.write("Generate customized study schedules tailored to your exams and available daily time.")
@@ -886,7 +877,6 @@ with tab9:
         else:
             st.warning("Please enter your subjects or topics.")
 
-
 with tab10:
     st.header("🧪 Science & Physics STEM Assistant")
     st.write("Understand complex physics, chemistry, or biology formulas with step-by-step real-world explanations.")
@@ -909,7 +899,6 @@ with tab10:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a science question or formula.")
-
 
 with tab11:
     st.header("✉️ Professional Email & Letter Writer")
@@ -934,7 +923,6 @@ with tab11:
                     st.error(f"Error: {e}")
         else:
             st.warning("Please enter the main purpose of your email.")
-
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
