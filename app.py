@@ -391,14 +391,14 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- ULTRA-STABLE PRODUCTION FALLBACK ARRAY ---
-FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash"]
+# --- UPDATED MODEL ENDPOINT TO GEMINI-3.8-FLASH WITH RETRY FALLBACK ---
+FALLBACK_MODELS = ["gemini-3.8-flash"]
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
     for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
+        for attempt in range(4):
             try:
                 return client_obj.models.generate_content(
                     model=model_id, 
@@ -409,7 +409,7 @@ def safe_generate(client_obj, contents):
                 last_error = e
                 err_str = str(e).upper()
                 if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.0 * (attempt + 1))
+                    time.sleep(1.5 * (attempt + 1))
                     continue
                 break
     raise last_error
@@ -418,7 +418,7 @@ def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
     for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
+        for attempt in range(4):
             try:
                 return client_obj.models.generate_content_stream(
                     model=model_id, 
@@ -429,7 +429,7 @@ def safe_generate_stream(client_obj, contents):
                 last_error = e
                 err_str = str(e).upper()
                 if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.0 * (attempt + 1))
+                    time.sleep(1.5 * (attempt + 1))
                     continue
                 break
     raise last_error
@@ -441,7 +441,7 @@ def safe_generate_image(client_obj, prompt_text):
     )
     last_error = None
     for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
+        for attempt in range(4):
             try:
                 return client_obj.models.generate_content(
                     model=model_id,
@@ -452,7 +452,7 @@ def safe_generate_image(client_obj, prompt_text):
                 last_error = e
                 err_str = str(e).upper()
                 if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.0 * (attempt + 1))
+                    time.sleep(1.5 * (attempt + 1))
                     continue
                 break
     raise last_error
