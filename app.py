@@ -25,15 +25,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 1. DATABASE SETUP FOR USERS & ACCOUNTS ---
+# --- 1. DATABASE SETUP (USERS & PERSISTENT HISTORY) ---
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             email TEXT UNIQUE,
-            password_hash BLOB
+            password_hash BLOB,
+            app_passcode TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            history_item TEXT
         )
     ''')
     conn.commit()
@@ -41,13 +49,13 @@ def init_db():
 
 init_db()
 
-def create_user(username, email, password):
-    conn = sqlite3.connect("users.db")
+def create_user(username, email, password, passcode):
+    conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
     salt = bcrypt.gensalt()
     pw_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
     try:
-        c.execute("INSERT INTO users VALUES (?, ?, ?)", (username, email, pw_hash))
+        c.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (username, email, pw_hash, passcode))
         conn.commit()
         conn.close()
         return True, "Account created successfully! Please log in."
@@ -58,15 +66,37 @@ def create_user(username, email, password):
         return False, "Email already registered."
 
 def verify_user(username_or_email, password):
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
-    c.execute("SELECT username, password_hash FROM users WHERE username=? OR email=?", (username_or_email, username_or_email))
+    c.execute("SELECT username, password_hash, app_passcode FROM users WHERE username=? OR email=?", (username_or_email, username_or_email))
     user = c.fetchone()
     conn.close()
     
     if user and bcrypt.checkpw(password.encode('utf-8'), user[1]):
-        return True, user[0]
-    return False, None
+        return True, user[0], user[2] # username, passcode
+    return False, None, None
+
+def load_user_history(username):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("SELECT history_item FROM history WHERE username=?", (username,))
+    rows = c.fetchall()
+    conn.close()
+    return [row[0] for row in rows]
+
+def save_user_history_item(username, item):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO history (username, history_item) VALUES (?, ?)", (username, item))
+    conn.commit()
+    conn.close()
+
+def clear_user_history_db(username):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM history WHERE username=?", (username,))
+    conn.commit()
+    conn.close()
 
 # --- 2. FUTURISTIC UI STYLING & SOUND FX ---
 futuristic_style = """
@@ -248,13 +278,14 @@ document.addEventListener('click', (e) => {
 """
 components.html(cyber_js, height=0, width=0)
 
-# --- 3. SESSION STATE & LOGIN / SIGNUP SCREEN ---
+# --- 3. SESSION STATE & AUTHENTICATION ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_name" not in st.session_state:
     st.session_state.user_name = ""
+if "passcode_verified" not in st.session_state:
+    st.session_state.passcode_verified = False
 
-# Auto login sync via query params / local storage
 query_params = st.query_params
 if "user" in query_params and query_params["user"]:
     st.session_state.user_name = query_params["user"]
@@ -262,7 +293,7 @@ if "user" in query_params and query_params["user"]:
 
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
-    st.markdown("### Please log in or create an account to access your AI assistant")
+    st.markdown("### Secure Sign In & Account Registration")
     
     tab_login, tab_signup = st.tabs(["🔑 Log In", "📝 Sign Up"])
     
@@ -275,19 +306,12 @@ if not st.session_state.logged_in:
                 if not login_input.strip() or not login_password.strip():
                     st.warning("⚠️ Please fill in all fields.")
                 else:
-                    success, username = verify_user(login_input.strip(), login_password.strip())
+                    success, username, passcode = verify_user(login_input.strip(), login_password.strip())
                     if success:
                         st.session_state.user_name = username
                         st.session_state.logged_in = True
-                        save_js = f"""
-                        <script>
-                            localStorage.setItem("muk_ai_user_name", "{username}");
-                            const url = new URL(window.location.href);
-                            url.searchParams.set("user", "{username}");
-                            window.location.href = url.href;
-                        </script>
-                        """
-                        components.html(save_js, height=0, width=0)
+                        st.session_state.saved_passcode = passcode
+                        st.session_state.passcode_verified = False # Require entering passcode
                         st.rerun()
                     else:
                         st.error("❌ Invalid username/email or password.")
@@ -297,24 +321,58 @@ if not st.session_state.logged_in:
             new_username = st.text_input("Choose a Username")
             new_email = st.text_input("Email Address")
             new_password = st.text_input("Choose a Password", type="password")
+            new_passcode = st.text_input("Set a 4-Digit App Passcode / PIN", type="password", max_chars=6, placeholder="e.g. 1234")
             confirm_password = st.text_input("Confirm Password", type="password")
             btn_signup = st.form_submit_button("Create Account")
             if btn_signup:
-                if not new_username.strip() or not new_email.strip() or not new_password.strip():
-                    st.warning("⚠️ Please fill out all required fields.")
+                if not new_username.strip() or not new_email.strip() or not new_password.strip() or not new_passcode.strip():
+                    st.warning("⚠️ Please fill out all required fields including your App Passcode.")
                 elif new_password != confirm_password:
                     st.error("❌ Passwords do not match.")
                 elif len(new_password) < 6:
                     st.warning("⚠️ Password must be at least 6 characters long.")
                 else:
-                    created, msg = create_user(new_username.strip(), new_email.strip(), new_password.strip())
+                    created, msg = create_user(new_username.strip(), new_email.strip(), new_password.strip(), new_passcode.strip())
                     if created:
                         st.success(msg)
                     else:
                         st.error(f"❌ {msg}")
     st.stop()
 
-# --- 4. API CLIENT & SETTINGS ---
+# --- 4. PASSCODE LOCK SCREEN ---
+if not st.session_state.get("passcode_verified", False):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("SELECT app_passcode FROM users WHERE username=?", (st.session_state.user_name,))
+    row = c.fetchone()
+    conn.close()
+    correct_passcode = row[0] if row else ""
+
+    st.title(f"🔒 App Locked for {st.session_state.user_name}")
+    st.markdown("### Enter your secure App Passcode / PIN to unlock your history and session:")
+    
+    with st.form("passcode_form"):
+        entered_passcode = st.text_input("Enter Passcode / PIN", type="password", max_chars=6)
+        unlock_btn = st.form_submit_button("Unlock App")
+        if unlock_btn:
+            if entered_passcode == correct_passcode:
+                st.session_state.passcode_verified = True
+                st.rerun()
+            else:
+                st.error("❌ Incorrect passcode. Try again.")
+                
+    if st.button("🚪 Log Out"):
+        st.session_state.logged_in = False
+        st.session_state.user_name = ""
+        st.session_state.passcode_verified = False
+        st.rerun()
+    st.stop()
+
+# --- 5. LOAD PERSISTENT HISTORY FOR THIS USER ---
+if "global_history" not in st.session_state or not st.session_state.global_history:
+    st.session_state.global_history = load_user_history(st.session_state.user_name)
+
+# --- 6. API CLIENT & SETTINGS ---
 api_key = None
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -328,23 +386,14 @@ if api_key:
     except Exception as e:
         st.error(f"Configuration error: {e}")
 
-if "global_history" not in st.session_state:
-    st.session_state.global_history = []
-
 st.sidebar.markdown(f"### 👤 Logged in as: `{st.session_state.user_name}`")
+if st.sidebar.button("🔒 Lock App"):
+    st.session_state.passcode_verified = False
+    st.rerun()
 if st.sidebar.button("🚪 Log Out"):
     st.session_state.logged_in = False
     st.session_state.user_name = ""
-    st.query_params.clear()
-    clear_js = """
-    <script>
-        localStorage.removeItem("muk_ai_user_name");
-        const url = new URL(window.location.href);
-        url.searchParams.delete("user");
-        window.location.href = url.origin + url.pathname;
-    </script>
-    """
-    components.html(clear_js, height=0, width=0)
+    st.session_state.passcode_verified = False
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -379,15 +428,16 @@ st.sidebar.subheader("🔊 Audio Settings")
 enable_natural_voice = st.sidebar.toggle("Enable Natural Voice 🔊", value=True)
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("📜 Recent History")
+st.sidebar.subheader("📜 Saved History")
 if st.session_state.global_history:
     for idx, past_item in enumerate(reversed(st.session_state.global_history[-6:])):
         st.sidebar.caption(f"{idx+1}. {past_item}")
     if st.sidebar.button("Clear History"):
+        clear_user_history_db(st.session_state.user_name)
         st.session_state.global_history = []
         st.rerun()
 else:
-    st.sidebar.write("No questions asked yet.")
+    st.sidebar.write("No history saved yet.")
 
 def speak_natural_voice(text_to_speak):
     if enable_natural_voice:
@@ -428,7 +478,6 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- 5. STABLE MODEL WITH EXPONENTIAL BACKOFF RETRY LOGIC ---
 PRIMARY_MODEL = "gemini-3.8-flash"
 
 def safe_generate(client_obj, contents):
@@ -445,7 +494,7 @@ def safe_generate(client_obj, contents):
             last_error = e
             err_str = str(e).upper()
             if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 2 * (2 ** attempt) # 2s, 4s, 8s, 16s
+                sleep_duration = 2 * (2 ** attempt)
                 time.sleep(sleep_duration)
                 continue
             break
@@ -579,7 +628,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input (auto-retrying if busy)..."):
+            with st.spinner("Muk AI is analyzing your input..."):
                 try:
                     payload = []
                     pdf_text = ""
@@ -599,7 +648,11 @@ with tab1:
                     
                     response = safe_generate(client, payload)
                     solution_text = response.text
-                    st.session_state.global_history.append(f"Homework: {query_text[:40]}...")
+                    
+                    hist_entry = f"Homework: {query_text[:40]}..."
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Solution:")
                     st.write(solution_text)
                     speak_natural_voice(solution_text[:300])
@@ -622,7 +675,11 @@ with tab2:
                     prompt = f"Write a {essay_length.lower()} about: {essay_topic}. Keep it clear, engaging, and well-structured."
                     response = safe_generate(client, prompt)
                     essay_text = response.text
-                    st.session_state.global_history.append(f"Essay: {essay_topic[:40]}")
+                    
+                    hist_entry = f"Essay: {essay_topic[:40]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Generated Text:")
                     st.write(essay_text)
                     speak_natural_voice("Your essay has been generated successfully!")
@@ -649,7 +706,11 @@ with tab3:
                     prompt = f"Create a professional {pres_slides}-slide presentation outline on: {pres_topic}. Include slide titles and clear bullet points for each slide."
                     response = safe_generate(client, prompt)
                     pres_text = response.text
-                    st.session_state.global_history.append(f"Presentation: {pres_topic[:40]}")
+                    
+                    hist_entry = f"Presentation: {pres_topic[:40]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Presentation Deck Outline:")
                     st.write(pres_text)
                     speak_natural_voice("Your presentation deck is ready!")
@@ -687,7 +748,11 @@ with tab4:
                                         image = Image.open(BytesIO(img_bytes))
                                         st.image(image, caption=img_prompt, use_column_width=True)
                                         image_found = True
-                                        st.session_state.global_history.append(f"Visual: {img_prompt[:40]}")
+                                        
+                                        hist_entry = f"Visual: {img_prompt[:40]}"
+                                        st.session_state.global_history.append(hist_entry)
+                                        save_user_history_item(st.session_state.user_name, hist_entry)
+                                        
                                         speak_natural_voice("Your image has been generated!")
                                         
                                         pdf_data = create_image_pdf(img_bytes, img_prompt)
@@ -755,7 +820,11 @@ with tab5:
                                 
                     reply = st.write_stream(stream_generator())
                     st.session_state.chat_messages.append({"role": "assistant", "content": reply})
-                    st.session_state.global_history.append(f"Chat ({chat_mode}): {chat_input[:30]}...")
+                    
+                    hist_entry = f"Chat ({chat_mode}): {chat_input[:30]}..."
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     speak_natural_voice(reply[:200])
                 except Exception as e:
                     st.error(f"Error: {e}")
@@ -781,7 +850,11 @@ with tab6:
                     prompt = f"Calculate the answer and provide step-by-step working for: {calc_input}"
                     response = safe_generate(client, prompt)
                     calc_result = response.text
-                    st.session_state.global_history.append(f"Calculator: {calc_input[:30]}")
+                    
+                    hist_entry = f"Calculator: {calc_input[:30]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Result:")
                     st.write(calc_result)
                     speak_natural_voice("Calculation complete!")
@@ -806,7 +879,9 @@ with tab6:
                 ax.yaxis.label.set_color('white')
                 
                 st.pyplot(fig)
-                st.session_state.global_history.append(f"Graph: {calc_input[:30]}")
+                hist_entry = f"Graph: {calc_input[:30]}"
+                st.session_state.global_history.append(hist_entry)
+                save_user_history_item(st.session_state.user_name, hist_entry)
             except Exception as e:
                 st.error(f"Could not plot expression: {e}. Try entering a formula with 'x', e.g., 'x**2' or 'sin(x)'.")
 
@@ -829,7 +904,11 @@ with tab7:
                         prompt = f"Create a set of 5 digital flashcards with 'Front (Question)' and 'Back (Answer)' based on: {study_topic}."
                         
                     response = safe_generate(client, prompt)
-                    st.session_state.global_history.append(f"Exam Prep: {study_topic[:30]}")
+                    
+                    hist_entry = f"Exam Prep: {study_topic[:30]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Study Material Ready:")
                     st.write(response.text)
                     speak_natural_voice("Your exam practice materials are ready!")
@@ -870,7 +949,11 @@ with tab8:
                 try:
                     prompt = f"Translate the following text from {src_lang_final} to {target_lang_final}. Preserve exact natural context and explain any idioms or cultural nuances if present: {trans_text}"
                     response = safe_generate(client, prompt)
-                    st.session_state.global_history.append(f"Translation: {trans_text[:30]}")
+                    
+                    hist_entry = f"Translation: {trans_text[:30]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Translation:")
                     st.write(response.text)
                     speak_natural_voice(response.text[:300])
@@ -895,7 +978,11 @@ with tab9:
                 try:
                     prompt = f"Create a structured, day-by-day study schedule for the next {days_left} days covering these subjects: {subjects}. The student has {daily_hours} hours available each day. Include specific study goals and break periods."
                     response = safe_generate(client, prompt)
-                    st.session_state.global_history.append(f"Planner: {subjects[:30]}")
+                    
+                    hist_entry = f"Planner: {subjects[:30]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Your Personalized Timetable:")
                     st.write(response.text)
                     speak_natural_voice("Your study schedule is ready!")
@@ -918,7 +1005,11 @@ with tab10:
                 try:
                     prompt = f"Act as an expert STEM tutor. Explain this science concept or formula step-by-step with real-world examples, formula breakdown, and intuitive analogies: {stem_concept}"
                     response = safe_generate(client, prompt)
-                    st.session_state.global_history.append(f"STEM: {stem_concept[:30]}")
+                    
+                    hist_entry = f"STEM: {stem_concept[:30]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Scientific Breakdown:")
                     st.write(response.text)
                     speak_natural_voice("Scientific explanation complete!")
@@ -942,7 +1033,11 @@ with tab11:
                 try:
                     prompt = f"Draft a complete, well-structured email with Subject line and Body. Tone should be {email_tone}. Purpose: {email_purpose}"
                     response = safe_generate(client, prompt)
-                    st.session_state.global_history.append(f"Email: {email_purpose[:30]}")
+                    
+                    hist_entry = f"Email: {email_purpose[:30]}"
+                    st.session_state.global_history.append(hist_entry)
+                    save_user_history_item(st.session_state.user_name, hist_entry)
+                    
                     st.success("Drafted Email:")
                     st.write(response.text)
                     speak_natural_voice("Your email draft is ready!")
