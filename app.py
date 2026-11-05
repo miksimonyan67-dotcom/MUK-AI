@@ -1,4 +1,6 @@
 import time
+import sqlite3
+import bcrypt
 from io import BytesIO
 import streamlit as st
 import streamlit.components.v1 as components
@@ -23,6 +25,50 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- 1. DATABASE SETUP FOR USERS & ACCOUNTS ---
+def init_db():
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            email TEXT UNIQUE,
+            password_hash BLOB
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def create_user(username, email, password):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    salt = bcrypt.gensalt()
+    pw_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+    try:
+        c.execute("INSERT INTO users VALUES (?, ?, ?)", (username, email, pw_hash))
+        conn.commit()
+        conn.close()
+        return True, "Account created successfully! Please log in."
+    except sqlite3.IntegrityError as e:
+        conn.close()
+        if "username" in str(e):
+            return False, "Username already exists."
+        return False, "Email already registered."
+
+def verify_user(username_or_email, password):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT username, password_hash FROM users WHERE username=? OR email=?", (username_or_email, username_or_email))
+    user = c.fetchone()
+    conn.close()
+    
+    if user and bcrypt.checkpw(password.encode('utf-8'), user[1]):
+        return True, user[0]
+    return False, None
+
+# --- 2. FUTURISTIC UI STYLING & SOUND FX ---
 futuristic_style = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
@@ -202,25 +248,13 @@ document.addEventListener('click', (e) => {
 """
 components.html(cyber_js, height=0, width=0)
 
+# --- 3. SESSION STATE & LOGIN / SIGNUP SCREEN ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_name" not in st.session_state:
     st.session_state.user_name = ""
 
-login_sync_js = """
-<script>
-    const savedName = localStorage.getItem("muk_ai_user_name");
-    if (savedName && savedName.trim() !== "") {
-        const url = new URL(window.location.href);
-        if (!url.searchParams.has("user")) {
-            url.searchParams.set("user", savedName);
-            window.location.href = url.href;
-        }
-    }
-</script>
-"""
-components.html(login_sync_js, height=0, width=0)
-
+# Auto login sync via query params / local storage
 query_params = st.query_params
 if "user" in query_params and query_params["user"]:
     st.session_state.user_name = query_params["user"]
@@ -228,75 +262,59 @@ if "user" in query_params and query_params["user"]:
 
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
-    st.markdown("### Please sign in to access the world's most beautiful AI assistant")
+    st.markdown("### Please log in or create an account to access your AI assistant")
     
-    login_tab1, login_tab2 = st.tabs(["🔴 Sign in with Google", "✍️ Manual Sign In"])
+    tab_login, tab_signup = st.tabs(["🔑 Log In", "📝 Sign Up"])
     
-    with login_tab1:
-        st.write("Sign in instantly using your Google account profile.")
-        google_email = st.text_input("Enter your Google Email", placeholder="e.g., student@gmail.com", key="g_email")
-        if st.button("Continue with Google"):
-            if google_email.strip():
-                name_part = google_email.split('@')[0].replace('.', ' ').title()
-                st.session_state.user_name = name_part
-                st.session_state.logged_in = True
-                
-                save_js = f"""
-                <script>
-                    localStorage.setItem("muk_ai_user_name", "{name_part}");
-                    const url = new URL(window.location.href);
-                    url.searchParams.set("user", "{name_part}");
-                    window.location.href = url.href;
-                </script>
-                """
-                components.html(save_js, height=0, width=0)
-                st.rerun()
-            else:
-                st.warning("⚠️ Please enter your Google email address.")
-                
-    with login_tab2:
+    with tab_login:
         with st.form("login_form"):
-            first_name = st.text_input("Your First Name")
-            surname = st.text_input("Your Surname")
-            submitted = st.form_submit_button("Log In")
-            if submitted:
-                if first_name.strip() and surname.strip():
-                    full_name = f"{first_name.strip()} {surname.strip()}"
-                    st.session_state.user_name = full_name
-                    st.session_state.logged_in = True
-                    
-                    save_js = f"""
-                    <script>
-                        localStorage.setItem("muk_ai_user_name", "{full_name}");
-                        const url = new URL(window.location.href);
-                        url.searchParams.set("user", "{full_name}");
-                        window.location.href = url.href;
-                    </script>
-                    """
-                    components.html(save_js, height=0, width=0)
-                    st.rerun()
+            login_input = st.text_input("Username or Email")
+            login_password = st.text_input("Password", type="password")
+            btn_login = st.form_submit_button("Log In")
+            if btn_login:
+                if not login_input.strip() or not login_password.strip():
+                    st.warning("⚠️ Please fill in all fields.")
                 else:
-                    st.warning("⚠️ Please enter both your name and surname to continue.")
+                    success, username = verify_user(login_input.strip(), login_password.strip())
+                    if success:
+                        st.session_state.user_name = username
+                        st.session_state.logged_in = True
+                        save_js = f"""
+                        <script>
+                            localStorage.setItem("muk_ai_user_name", "{username}");
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("user", "{username}");
+                            window.location.href = url.href;
+                        </script>
+                        """
+                        components.html(save_js, height=0, width=0)
+                        st.rerun()
+                    else:
+                        st.error("❌ Invalid username/email or password.")
+                        
+    with tab_signup:
+        with st.form("signup_form"):
+            new_username = st.text_input("Choose a Username")
+            new_email = st.text_input("Email Address")
+            new_password = st.text_input("Choose a Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            btn_signup = st.form_submit_button("Create Account")
+            if btn_signup:
+                if not new_username.strip() or not new_email.strip() or not new_password.strip():
+                    st.warning("⚠️ Please fill out all required fields.")
+                elif new_password != confirm_password:
+                    st.error("❌ Passwords do not match.")
+                elif len(new_password) < 6:
+                    st.warning("⚠️ Password must be at least 6 characters long.")
+                else:
+                    created, msg = create_user(new_username.strip(), new_email.strip(), new_password.strip())
+                    if created:
+                        st.success(msg)
+                    else:
+                        st.error(f"❌ {msg}")
     st.stop()
 
-st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Aurora Borealis Gradients, Sound FX, and Holographic HUD!")
-
-if st.sidebar.button("🚪 Log Out"):
-    st.session_state.logged_in = False
-    st.session_state.user_name = ""
-    st.query_params.clear()
-    clear_js = """
-    <script>
-        localStorage.removeItem("muk_ai_user_name");
-        const url = new URL(window.location.href);
-        url.searchParams.delete("user");
-        window.location.href = url.origin + url.pathname;
-    </script>
-    """
-    components.html(clear_js, height=0, width=0)
-    st.rerun()
-
+# --- 4. API CLIENT & SETTINGS ---
 api_key = None
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -312,6 +330,22 @@ if api_key:
 
 if "global_history" not in st.session_state:
     st.session_state.global_history = []
+
+st.sidebar.markdown(f"### 👤 Logged in as: `{st.session_state.user_name}`")
+if st.sidebar.button("🚪 Log Out"):
+    st.session_state.logged_in = False
+    st.session_state.user_name = ""
+    st.query_params.clear()
+    clear_js = """
+    <script>
+        localStorage.removeItem("muk_ai_user_name");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("user");
+        window.location.href = url.origin + url.pathname;
+    </script>
+    """
+    components.html(clear_js, height=0, width=0)
+    st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("👤 User Avatar Style")
@@ -377,6 +411,9 @@ You are Muk AI, a multi-functional AI assistant.
 2. Always formulate all your output responses in the following language: {selected_language}.
 """
 
+st.title(f"Hello, {st.session_state.user_name}!")
+st.markdown("Your ultimate assistant with Aurora Borealis Gradients, Sound FX, and Holographic HUD!")
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "📚 Homework", 
     "✍️ Essay", 
@@ -391,7 +428,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- STABLE GEMINI-3.8-FLASH MODEL WITH EXPONENTIAL BACKOFF RETRY LOGIC ---
+# --- 5. STABLE MODEL WITH EXPONENTIAL BACKOFF RETRY LOGIC ---
 PRIMARY_MODEL = "gemini-3.8-flash"
 
 def safe_generate(client_obj, contents):
