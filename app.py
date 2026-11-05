@@ -391,8 +391,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- MULTI-MODEL RESILIENT FALLBACK ARRAY FOR 503 OVERLOADS ---
-FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
+# --- STABLE STRESS-TESTED FALLBACK MODELS USING GEMINI-FLASH-LATEST ---
+FALLBACK_MODELS = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-2.0-flash"]
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
