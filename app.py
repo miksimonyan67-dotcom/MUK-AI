@@ -391,47 +391,43 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- UPDATED MODEL ENDPOINT TO GEMINI-3.8-FLASH ---
-FALLBACK_MODELS = ["gemini-3.8-flash"]
-
+# --- ULTRA-FAST ROBUST API FUNCTIONS WITH AUTOMATIC RETRIES ---
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
-            try:
-                return client_obj.models.generate_content(
-                    model=model_id, 
-                    contents=contents,
-                    config=config
-                )
-            except Exception as e:
-                last_error = e
-                err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.0 * (attempt + 1))
-                    continue
-                break
+    for attempt in range(4):
+        try:
+            return client_obj.models.generate_content(
+                model="gemini-3.8-flash", 
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            err_str = str(e)
+            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                time.sleep(2 ** attempt) # Exponential backoff: 1s, 2s, 4s
+                continue
+            raise e
     raise last_error
 
 def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
-            try:
-                return client_obj.models.generate_content_stream(
-                    model=model_id, 
-                    contents=contents,
-                    config=config
-                )
-            except Exception as e:
-                last_error = e
-                err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.0 * (attempt + 1))
-                    continue
-                break
+    for attempt in range(4):
+        try:
+            return client_obj.models.generate_content_stream(
+                model="gemini-3.8-flash", 
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            err_str = str(e)
+            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                time.sleep(2 ** attempt)
+                continue
+            raise e
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
@@ -440,21 +436,20 @@ def safe_generate_image(client_obj, prompt_text):
         system_instruction=SYSTEM_INSTRUCTION
     )
     last_error = None
-    for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
-            try:
-                return client_obj.models.generate_content(
-                    model=model_id,
-                    contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
-                    config=config
-                )
-            except Exception as e:
-                last_error = e
-                err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.0 * (attempt + 1))
-                    continue
-                break
+    for attempt in range(4):
+        try:
+            return client_obj.models.generate_content(
+                model="gemini-3.8-flash",
+                contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            err_str = str(e)
+            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                time.sleep(2 ** attempt)
+                continue
+            raise e
     raise last_error
 
 def extract_pdf_text(uploaded_pdf):
