@@ -325,7 +325,7 @@ WORLD_LANGUAGES = [
     "Arabic (العربية)", "Portuguese (Português)", "Japanese (日本語)", 
     "Hindi (हिन्दी)", "Korean (한국어)", "Italiano (Italian)", "Turkish (Türkçe)", 
     "Dutch (Nederlands)", "Greek (Ελληνικά)", "Polish (Polski)", "Persian (فارسی)", 
-    "Hebrew (עברית)", "Swedish (Svenska)", "Ukrainian (Українська)", "Czech (Čeština)", 
+    "Hebrew (עبریտ)", "Swedish (Svenska)", "Ukrainian (Українська)", "Czech (Čeština)", 
     "Vietnamese (Tiếng Việt)", "Thai (ไทย)", "Indonesian (Bahasa Indonesia)", 
     "Bengali (বাংলা)", "Urdu (اردو)", "Swahili (Kiswahili)", "Custom / Other Language..."
 ]
@@ -391,33 +391,65 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- UPDATED TO USE GEMINI-3.8-FLASH FOR MAXIMUM SPEED ---
+# --- RESILIENT FALLBACK FUNCTIONS PREVENTING 503 OVERLOAD ERRORS ---
+FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-2.0-flash"]
+
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
-    return client_obj.models.generate_content(
-        model="gemini-3.8-flash", 
-        contents=contents,
-        config=config
-    )
+    last_error = None
+    for model_id in FALLBACK_MODELS:
+        try:
+            return client_obj.models.generate_content(
+                model=model_id, 
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                time.sleep(0.5)
+                continue
+            raise e
+    raise last_error
 
 def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
-    return client_obj.models.generate_content_stream(
-        model="gemini-3.8-flash", 
-        contents=contents,
-        config=config
-    )
+    last_error = None
+    for model_id in FALLBACK_MODELS:
+        try:
+            return client_obj.models.generate_content_stream(
+                model=model_id, 
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                time.sleep(0.5)
+                continue
+            raise e
+    raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
     config = types.GenerateContentConfig(
         response_modalities=["IMAGE", "TEXT"],
         system_instruction=SYSTEM_INSTRUCTION
     )
-    return client_obj.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
-        config=config
-    )
+    last_error = None
+    for model_id in FALLBACK_MODELS:
+        try:
+            return client_obj.models.generate_content(
+                model=model_id,
+                contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                time.sleep(0.5)
+                continue
+            raise e
+    raise last_error
 
 def extract_pdf_text(uploaded_pdf):
     reader = PdfReader(uploaded_pdf)
