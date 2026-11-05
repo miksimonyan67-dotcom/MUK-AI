@@ -391,8 +391,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- RESILIENT FALLBACK WITH VALID API MODEL ENDPOINTS ---
-FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"]
+# --- UPDATED MODEL ENDPOINT TO GEMINI-3.8-FLASH ---
+FALLBACK_MODELS = ["gemini-3.8-flash"]
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
