@@ -1,7 +1,8 @@
 streamlit
 google-genai
-pillow
-reportlab
-python-pptx
+bcrypt
 pypdf
+python-pptx
+reportlab
 matplotlib
+numpy
