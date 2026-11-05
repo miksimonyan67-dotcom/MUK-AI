@@ -391,47 +391,47 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- ULTRA-RELIABLE PRODUCTION STABLE MODELS WITH AUTOMATIC FALLBACK ---
-FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"]
+# --- STABLE GEMINI-3.8-FLASH MODEL WITH EXPONENTIAL BACKOFF RETRY LOGIC ---
+PRIMARY_MODEL = "gemini-3.8-flash"
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
-            try:
-                return client_obj.models.generate_content(
-                    model=model_id, 
-                    contents=contents,
-                    config=config
-                )
-            except Exception as e:
-                last_error = e
-                err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.5 * (attempt + 1))
-                    continue
-                break
+    for attempt in range(4):
+        try:
+            return client_obj.models.generate_content(
+                model=PRIMARY_MODEL, 
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            err_str = str(e).upper()
+            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                sleep_duration = 2 * (2 ** attempt) # 2s, 4s, 8s, 16s
+                time.sleep(sleep_duration)
+                continue
+            break
     raise last_error
 
 def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
-            try:
-                return client_obj.models.generate_content_stream(
-                    model=model_id, 
-                    contents=contents,
-                    config=config
-                )
-            except Exception as e:
-                last_error = e
-                err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.5 * (attempt + 1))
-                    continue
-                break
+    for attempt in range(4):
+        try:
+            return client_obj.models.generate_content_stream(
+                model=PRIMARY_MODEL, 
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            err_str = str(e).upper()
+            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                sleep_duration = 2 * (2 ** attempt)
+                time.sleep(sleep_duration)
+                continue
+            break
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
@@ -440,21 +440,21 @@ def safe_generate_image(client_obj, prompt_text):
         system_instruction=SYSTEM_INSTRUCTION
     )
     last_error = None
-    for model_id in FALLBACK_MODELS:
-        for attempt in range(3):
-            try:
-                return client_obj.models.generate_content(
-                    model=model_id,
-                    contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
-                    config=config
-                )
-            except Exception as e:
-                last_error = e
-                err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.5 * (attempt + 1))
-                    continue
-                break
+    for attempt in range(4):
+        try:
+            return client_obj.models.generate_content(
+                model=PRIMARY_MODEL,
+                contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
+                config=config
+            )
+        except Exception as e:
+            last_error = e
+            err_str = str(e).upper()
+            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                sleep_duration = 2 * (2 ** attempt)
+                time.sleep(sleep_duration)
+                continue
+            break
     raise last_error
 
 def extract_pdf_text(uploaded_pdf):
@@ -542,7 +542,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input..."):
+            with st.spinner("Muk AI is analyzing your input (auto-retrying if busy)..."):
                 try:
                     payload = []
                     pdf_text = ""
@@ -568,7 +568,7 @@ with tab1:
                     speak_natural_voice(solution_text[:300])
                     st.download_button(label="📥 Download Solution as Text File", data=solution_text, file_name="muk_ai_homework_solution.txt", mime="text/plain", key="dl_hw")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
 
 with tab2:
     st.header("Essay & Text Writer")
@@ -591,7 +591,7 @@ with tab2:
                     speak_natural_voice("Your essay has been generated successfully!")
                     st.download_button(label="📥 Download Essay as Text File", data=essay_text, file_name="muk_ai_essay.txt", mime="text/plain", key="dl_essay")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic.")
 
@@ -624,7 +624,7 @@ with tab3:
                         pptx_data = create_pptx_deck(pres_topic, pres_text)
                         st.download_button(label="📊 Download PowerPoint (.pptx)", data=pptx_data, file_name="muk_ai_presentation.pptx", mime="application/vnd.openxmlformats-officedocument.presentationml.presentation", key="dl_pres_pptx")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter a presentation topic.")
 
@@ -666,7 +666,7 @@ with tab4:
                         st.warning("Model returned text response instead of image:")
                         st.write(response.text)
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Image generation error: {e}")
         else:
             st.warning("Please enter a description for your image.")
 
@@ -721,7 +721,7 @@ with tab5:
                     st.session_state.global_history.append(f"Chat ({chat_mode}): {chat_input[:30]}...")
                     speak_natural_voice(reply[:200])
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
 
 with tab6:
     st.header("🧮 Smart Calculator & Graph Plotter")
@@ -749,7 +749,7 @@ with tab6:
                     st.write(calc_result)
                     speak_natural_voice("Calculation complete!")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
                     
     if plot_btn:
         if calc_input:
@@ -797,7 +797,7 @@ with tab7:
                     st.write(response.text)
                     speak_natural_voice("Your exam practice materials are ready!")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic or paste study notes.")
 
@@ -838,7 +838,7 @@ with tab8:
                     st.write(response.text)
                     speak_natural_voice(response.text[:300])
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter text to translate.")
 
@@ -863,7 +863,7 @@ with tab9:
                     st.write(response.text)
                     speak_natural_voice("Your study schedule is ready!")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter your subjects or topics.")
 
@@ -886,7 +886,7 @@ with tab10:
                     st.write(response.text)
                     speak_natural_voice("Scientific explanation complete!")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter a science question or formula.")
 
@@ -910,7 +910,7 @@ with tab11:
                     st.write(response.text)
                     speak_natural_voice("Your email draft is ready!")
                 except Exception as e:
-                    st.error(f"⚠️ Server high demand encountered. Please try again in a few moments. Error: {e}")
+                    st.error(f"Error: {e}")
         else:
             st.warning("Please enter the main purpose of your email.")
 
