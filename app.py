@@ -391,7 +391,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- UPDATED MODEL ENDPOINT TO GEMINI-3.8-FLASH WITH RETRY FALLBACK ---
+# --- RESILIENT MODEL ENDPOINT WITH PATIENT EXPONENTIAL BACKOFF ---
 FALLBACK_MODELS = ["gemini-3.8-flash"]
 
 def safe_generate(client_obj, contents):
@@ -409,7 +409,9 @@ def safe_generate(client_obj, contents):
                 last_error = e
                 err_str = str(e).upper()
                 if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.5 * (attempt + 1))
+                    # Exponential backoff: 2s, 4s, 8s, 16s
+                    sleep_duration = 2 * (2 ** attempt)
+                    time.sleep(sleep_duration)
                     continue
                 break
     raise last_error
@@ -429,7 +431,8 @@ def safe_generate_stream(client_obj, contents):
                 last_error = e
                 err_str = str(e).upper()
                 if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.5 * (attempt + 1))
+                    sleep_duration = 2 * (2 ** attempt)
+                    time.sleep(sleep_duration)
                     continue
                 break
     raise last_error
@@ -452,7 +455,8 @@ def safe_generate_image(client_obj, prompt_text):
                 last_error = e
                 err_str = str(e).upper()
                 if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    time.sleep(1.5 * (attempt + 1))
+                    sleep_duration = 2 * (2 ** attempt)
+                    time.sleep(sleep_duration)
                     continue
                 break
     raise last_error
@@ -542,7 +546,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input..."):
+            with st.spinner("Muk AI is analyzing your input (auto-retrying if servers are busy)..."):
                 try:
                     payload = []
                     pdf_text = ""
