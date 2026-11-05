@@ -391,14 +391,14 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- RESILIENT MODEL ENDPOINT WITH PATIENT EXPONENTIAL BACKOFF ---
-FALLBACK_MODELS = ["gemini-3.8-flash"]
+# --- DYNAMIC MULTI-MODEL FALLBACK CHAIN TO PREVENT 503 OVERLOADS ---
+FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
     for model_id in FALLBACK_MODELS:
-        for attempt in range(4):
+        for attempt in range(2):
             try:
                 return client_obj.models.generate_content(
                     model=model_id, 
@@ -408,10 +408,8 @@ def safe_generate(client_obj, contents):
             except Exception as e:
                 last_error = e
                 err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    # Exponential backoff: 2s, 4s, 8s, 16s
-                    sleep_duration = 2 * (2 ** attempt)
-                    time.sleep(sleep_duration)
+                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str or "NOT_FOUND" in err_str:
+                    time.sleep(1.0)
                     continue
                 break
     raise last_error
@@ -420,7 +418,7 @@ def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
     for model_id in FALLBACK_MODELS:
-        for attempt in range(4):
+        for attempt in range(2):
             try:
                 return client_obj.models.generate_content_stream(
                     model=model_id, 
@@ -430,9 +428,8 @@ def safe_generate_stream(client_obj, contents):
             except Exception as e:
                 last_error = e
                 err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    sleep_duration = 2 * (2 ** attempt)
-                    time.sleep(sleep_duration)
+                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str or "NOT_FOUND" in err_str:
+                    time.sleep(1.0)
                     continue
                 break
     raise last_error
@@ -444,7 +441,7 @@ def safe_generate_image(client_obj, prompt_text):
     )
     last_error = None
     for model_id in FALLBACK_MODELS:
-        for attempt in range(4):
+        for attempt in range(2):
             try:
                 return client_obj.models.generate_content(
                     model=model_id,
@@ -454,9 +451,8 @@ def safe_generate_image(client_obj, prompt_text):
             except Exception as e:
                 last_error = e
                 err_str = str(e).upper()
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                    sleep_duration = 2 * (2 ** attempt)
-                    time.sleep(sleep_duration)
+                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str or "NOT_FOUND" in err_str:
+                    time.sleep(1.0)
                     continue
                 break
     raise last_error
@@ -546,7 +542,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input (auto-retrying if servers are busy)..."):
+            with st.spinner("Muk AI is analyzing your input..."):
                 try:
                     payload = []
                     pdf_text = ""
