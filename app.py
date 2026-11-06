@@ -99,12 +99,12 @@ def clear_user_history_db(username):
     conn.commit()
     conn.close()
 
-# --- 2. FUTURISTIC UI STYLING & HIDING STREAMLIT BRANDING ---
+# --- 2. FUTURISTIC UI STYLING & HIDING ALL STREAMLIT BADGES ---
 futuristic_style = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
 
-/* --- HIDE ALL STREAMLIT BRANDING, MENUS, AND FORK/VIEWER BADGES --- */
+/* --- HIDE ALL STREAMLIT BRANDING, MENUS, AND CORNER CLOUD BADGES --- */
 footer { visibility: hidden !important; display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
 .stDeployButton { display: none !important; visibility: hidden !important; }
@@ -113,6 +113,11 @@ div[class*="viewerBadge"] { display: none !important; visibility: hidden !import
 header { visibility: hidden !important; display: none !important; }
 .stAppDeployButton { display: none !important; visibility: hidden !important; }
 div[data-testid="stToolbar"] { display: none !important; visibility: hidden !important; }
+[data-testid="stDecoration"] { display: none !important; }
+div.viewerBadge_container__1QSob { display: none !important; visibility: hidden !important; }
+.styles_viewerBadge__1yG5_ { display: none !important; visibility: hidden !important; }
+iframe[title="streamlitAppBadge"] { display: none !important; visibility: hidden !important; }
+section[class*="viewerBadge"] { display: none !important; visibility: hidden !important; }
 
 [data-testid="collapsedControl"] {
     display: flex !important;
