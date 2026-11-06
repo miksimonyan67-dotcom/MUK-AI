@@ -1,4 +1,5 @@
 import time
+import re
 import sqlite3
 import bcrypt
 from io import BytesIO
@@ -487,13 +488,19 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- 7. ULTRA-RESILIENT GEMINI-3.8-FLASH WITH EXTENDED RETRY LOGIC ---
+# --- 7. ULTRA-RESILIENT GEMINI-3.8-FLASH WITH SMART 429 & 503 RETRY HANDLER ---
 PRIMARY_MODEL = "gemini-3.8-flash"
+
+def _extract_retry_seconds(error_msg, default_wait=15):
+    match = re.search(r"retry in (\d+(\.\d+)?)s", error_msg, re.IGNORECASE)
+    if match:
+        return min(float(match.group(1)) + 1.5, 45.0)
+    return default_wait
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for attempt in range(6):
+    for attempt in range(4):
         try:
             return client_obj.models.generate_content(
                 model=PRIMARY_MODEL, 
@@ -502,10 +509,14 @@ def safe_generate(client_obj, contents):
             )
         except Exception as e:
             last_error = e
-            err_str = str(e).upper()
-            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 3 * (attempt + 1)  # 3s, 6s, 9s, 12s, 15s, 18s
-                time.sleep(sleep_duration)
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
+                wait_sec = _extract_retry_seconds(err_str, default_wait=15)
+                st.toast(f"⏳ Free Tier quota reached (5 RPM). Waiting {int(wait_sec)}s to retry...")
+                time.sleep(wait_sec)
+                continue
+            elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
+                time.sleep(4 * (attempt + 1))
                 continue
             break
     raise last_error
@@ -513,7 +524,7 @@ def safe_generate(client_obj, contents):
 def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for attempt in range(6):
+    for attempt in range(4):
         try:
             return client_obj.models.generate_content_stream(
                 model=PRIMARY_MODEL, 
@@ -522,10 +533,14 @@ def safe_generate_stream(client_obj, contents):
             )
         except Exception as e:
             last_error = e
-            err_str = str(e).upper()
-            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 3 * (attempt + 1)
-                time.sleep(sleep_duration)
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
+                wait_sec = _extract_retry_seconds(err_str, default_wait=15)
+                st.toast(f"⏳ Free Tier quota reached (5 RPM). Waiting {int(wait_sec)}s to retry...")
+                time.sleep(wait_sec)
+                continue
+            elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
+                time.sleep(4 * (attempt + 1))
                 continue
             break
     raise last_error
@@ -536,7 +551,7 @@ def safe_generate_image(client_obj, prompt_text):
         system_instruction=SYSTEM_INSTRUCTION
     )
     last_error = None
-    for attempt in range(6):
+    for attempt in range(4):
         try:
             return client_obj.models.generate_content(
                 model=PRIMARY_MODEL,
@@ -545,10 +560,14 @@ def safe_generate_image(client_obj, prompt_text):
             )
         except Exception as e:
             last_error = e
-            err_str = str(e).upper()
-            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 3 * (attempt + 1)
-                time.sleep(sleep_duration)
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
+                wait_sec = _extract_retry_seconds(err_str, default_wait=15)
+                st.toast(f"⏳ Free Tier quota reached (5 RPM). Waiting {int(wait_sec)}s to retry...")
+                time.sleep(wait_sec)
+                continue
+            elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
+                time.sleep(4 * (attempt + 1))
                 continue
             break
     raise last_error
@@ -638,7 +657,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input (auto-retrying through traffic spikes)..."):
+            with st.spinner("Muk AI is analyzing your input (auto-handling free tier limits)..."):
                 try:
                     payload = []
                     pdf_text = ""
