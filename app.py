@@ -171,7 +171,6 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
-/* FIX VISIBILITY FOR CODE / USERNAME BADGE IN SIDEBAR */
 section[data-testid="stSidebar"] code {
     background-color: rgba(56, 189, 248, 0.15) !important;
     color: #38bdf8 !important;
@@ -488,12 +487,13 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
+# --- 7. ULTRA-RESILIENT GEMINI-3.8-FLASH WITH EXTENDED RETRY LOGIC ---
 PRIMARY_MODEL = "gemini-3.8-flash"
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for attempt in range(4):
+    for attempt in range(6):
         try:
             return client_obj.models.generate_content(
                 model=PRIMARY_MODEL, 
@@ -504,7 +504,7 @@ def safe_generate(client_obj, contents):
             last_error = e
             err_str = str(e).upper()
             if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 2 * (2 ** attempt)
+                sleep_duration = 3 * (attempt + 1)  # 3s, 6s, 9s, 12s, 15s, 18s
                 time.sleep(sleep_duration)
                 continue
             break
@@ -513,7 +513,7 @@ def safe_generate(client_obj, contents):
 def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for attempt in range(4):
+    for attempt in range(6):
         try:
             return client_obj.models.generate_content_stream(
                 model=PRIMARY_MODEL, 
@@ -524,7 +524,7 @@ def safe_generate_stream(client_obj, contents):
             last_error = e
             err_str = str(e).upper()
             if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 2 * (2 ** attempt)
+                sleep_duration = 3 * (attempt + 1)
                 time.sleep(sleep_duration)
                 continue
             break
@@ -536,7 +536,7 @@ def safe_generate_image(client_obj, prompt_text):
         system_instruction=SYSTEM_INSTRUCTION
     )
     last_error = None
-    for attempt in range(4):
+    for attempt in range(6):
         try:
             return client_obj.models.generate_content(
                 model=PRIMARY_MODEL,
@@ -547,7 +547,7 @@ def safe_generate_image(client_obj, prompt_text):
             last_error = e
             err_str = str(e).upper()
             if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                sleep_duration = 2 * (2 ** attempt)
+                sleep_duration = 3 * (attempt + 1)
                 time.sleep(sleep_duration)
                 continue
             break
@@ -638,7 +638,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input..."):
+            with st.spinner("Muk AI is analyzing your input (auto-retrying through traffic spikes)..."):
                 try:
                     payload = []
                     pdf_text = ""
