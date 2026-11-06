@@ -171,6 +171,16 @@ section[data-testid="stSidebar"] h3 {
     color: #f8fafc !important;
 }
 
+/* FIX VISIBILITY FOR CODE / USERNAME BADGE IN SIDEBAR */
+section[data-testid="stSidebar"] code {
+    background-color: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+    font-size: 14px !important;
+}
+
 .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
     background-color: rgba(13, 19, 38, 0.9) !important;
     border: 1px solid rgba(56, 189, 248, 0.4) !important;
