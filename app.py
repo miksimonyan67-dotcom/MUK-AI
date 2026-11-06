@@ -112,7 +112,7 @@ def validate_reset_token(token):
     row = c.fetchone()
     conn.close()
     if row and time.time() < row[2]:
-        return row[0], row[1]  # email, reset_type
+        return row[0], row[1]
     return None, None
 
 def consume_reset_token(token):
@@ -175,7 +175,9 @@ def send_recovery_email(to_email, username, token, reset_type):
     msg.add_alternative(html_body, subtype="html")
     
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        # Using Port 587 with TLS for maximum stability
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
             server.login(smtp_email, smtp_password)
             server.send_message(msg)
         return True, f"Confirmation email sent to {to_email}! Check your inbox and click the button inside."
