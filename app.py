@@ -1,4 +1,7 @@
 import time
+import uuid
+import smtplib
+from email.message import EmailMessage
 import sqlite3
 import bcrypt
 from io import BytesIO
@@ -25,7 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 1. DATABASE SETUP (USERS & PERSISTENT HISTORY) ---
+# --- 1. DATABASE SETUP (USERS, HISTORY & RESET TOKENS) ---
 def init_db():
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
@@ -44,6 +47,14 @@ def init_db():
             history_item TEXT
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS reset_tokens (
+            token TEXT PRIMARY KEY,
+            email TEXT,
+            reset_type TEXT,
+            expires_at REAL
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -55,7 +66,7 @@ def create_user(username, email, password, passcode):
     salt = bcrypt.gensalt()
     pw_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
     try:
-        c.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (username, email, pw_hash, passcode))
+        c.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (username, email.lower(), pw_hash, passcode))
         conn.commit()
         conn.close()
         return True, "Account created successfully! Please log in."
@@ -68,13 +79,108 @@ def create_user(username, email, password, passcode):
 def verify_user(username_or_email, password):
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
-    c.execute("SELECT username, password_hash, app_passcode FROM users WHERE username=? OR email=?", (username_or_email, username_or_email))
+    c.execute("SELECT username, password_hash, app_passcode FROM users WHERE username=? OR email=?", (username_or_email, username_or_email.lower()))
     user = c.fetchone()
     conn.close()
     
     if user and bcrypt.checkpw(password.encode('utf-8'), user[1]):
-        return True, user[0], user[2] # username, passcode
+        return True, user[0], user[2]
     return False, None, None
+
+def get_user_by_email(email):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE email=?", (email.lower(),))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+def generate_reset_token(email, reset_type):
+    token = str(uuid.uuid4())
+    expires_at = time.time() + 1800  # Valid for 30 minutes
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO reset_tokens VALUES (?, ?, ?, ?)", (token, email.lower(), reset_type, expires_at))
+    conn.commit()
+    conn.close()
+    return token
+
+def validate_reset_token(token):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("SELECT email, reset_type, expires_at FROM reset_tokens WHERE token=?", (token,))
+    row = c.fetchone()
+    conn.close()
+    if row and time.time() < row[2]:
+        return row[0], row[1]  # email, reset_type
+    return None, None
+
+def consume_reset_token(token):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM reset_tokens WHERE token=?", (token,))
+    conn.commit()
+    conn.close()
+
+def update_user_password(email, new_password):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    salt = bcrypt.gensalt()
+    pw_hash = bcrypt.hashpw(new_password.encode('utf-8'), salt)
+    c.execute("UPDATE users SET password_hash=? WHERE email=?", (pw_hash, email.lower()))
+    conn.commit()
+    conn.close()
+
+def update_user_pin(email, new_pin):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    c.execute("UPDATE users SET app_passcode=? WHERE email=?", (new_pin, email.lower()))
+    conn.commit()
+    conn.close()
+
+def send_recovery_email(to_email, username, token, reset_type):
+    smtp_email = st.secrets.get("SMTP_EMAIL", "")
+    smtp_password = st.secrets.get("SMTP_PASSWORD", "")
+    app_url = st.secrets.get("APP_URL", "http://localhost:8501").rstrip("/")
+    
+    if not smtp_email or not smtp_password:
+        return False, "SMTP_EMAIL or SMTP_PASSWORD is missing in Streamlit Secrets."
+        
+    reset_link = f"{app_url}/?reset_token={token}"
+    label = "Password" if reset_type == "password" else "App PIN / Passcode"
+    
+    msg = EmailMessage()
+    msg["Subject"] = f"Muk AI - Reset Your {label}"
+    msg["From"] = f"Muk AI Security <{smtp_email}>"
+    msg["To"] = to_email
+    
+    html_body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; background-color: #050711; color: #e2e8f0; padding: 30px;">
+        <div style="max-width: 500px; margin: auto; background: #0d1326; padding: 25px; border-radius: 12px; border: 1px solid #38bdf8;">
+          <h2 style="color: #38bdf8; margin-top: 0;">🤖 Muk AI Security Verification</h2>
+          <p>Hello <b>{username}</b>,</p>
+          <p>We received a request to reset your <b>{label}</b>. Click the button below to confirm your identity and create a new {label.lower()}:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="{reset_link}" style="background: linear-gradient(135deg, #38bdf8, #818cf8); color: #050711; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block;">
+              Create New {label}
+            </a>
+          </div>
+          <p style="font-size: 12px; color: #94a3b8;">This link expires in 30 minutes. If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      </body>
+    </html>
+    """
+    msg.set_content(f"Hello {username}, click this link to reset your {label}: {reset_link}")
+    msg.add_alternative(html_body, subtype="html")
+    
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(smtp_email, smtp_password)
+            server.send_message(msg)
+        return True, f"Confirmation email sent to {to_email}! Check your inbox and click the button inside."
+    except Exception as e:
+        return False, f"Failed to send email: {e}"
 
 def load_user_history(username):
     conn = sqlite3.connect("muk_ai_secure.db")
@@ -278,7 +384,66 @@ document.addEventListener('click', (e) => {
 """
 components.html(cyber_js, height=0, width=0)
 
-# --- 3. SESSION STATE & AUTHENTICATION ---
+# --- 3. HANDLE MAGIC EMAIL RESET BUTTON LINK (?reset_token=...) ---
+query_params = st.query_params
+if "reset_token" in query_params and query_params["reset_token"]:
+    token = query_params["reset_token"]
+    reset_email, reset_type = validate_reset_token(token)
+    
+    if reset_email and reset_type:
+        username = get_user_by_email(reset_email)
+        if reset_type == "password":
+            st.title("🔐 Create New Password")
+            st.markdown(f"### Verified Account: `{username}` ({reset_email})")
+            with st.form("new_pw_form"):
+                new_pw = st.text_input("Enter New Password", type="password")
+                confirm_pw = st.text_input("Confirm New Password", type="password")
+                save_pw_btn = st.form_submit_button("Save Password & Log In")
+                if save_pw_btn:
+                    if len(new_pw) < 6:
+                        st.warning("⚠️ Password must be at least 6 characters long.")
+                    elif new_pw != confirm_pw:
+                        st.error("❌ Passwords do not match.")
+                    else:
+                        update_user_password(reset_email, new_pw)
+                        consume_reset_token(token)
+                        st.query_params.clear()
+                        st.session_state.user_name = username
+                        st.session_state.logged_in = True
+                        st.session_state.passcode_verified = True
+                        st.success("✅ Password updated! Logging you in...")
+                        time.sleep(1)
+                        st.rerun()
+        elif reset_type == "pin":
+            st.title("🔢 Create New App PIN / Passcode")
+            st.markdown(f"### Verified Account: `{username}` ({reset_email})")
+            with st.form("new_pin_form"):
+                new_pin = st.text_input("Enter New 4-6 Digit PIN", type="password", max_chars=6)
+                confirm_pin = st.text_input("Confirm New PIN", type="password", max_chars=6)
+                save_pin_btn = st.form_submit_button("Save New PIN & Unlock")
+                if save_pin_btn:
+                    if not new_pin.strip():
+                        st.warning("⚠️ Please enter a valid PIN.")
+                    elif new_pin != confirm_pin:
+                        st.error("❌ PINs do not match.")
+                    else:
+                        update_user_pin(reset_email, new_pin.strip())
+                        consume_reset_token(token)
+                        st.query_params.clear()
+                        st.session_state.user_name = username
+                        st.session_state.logged_in = True
+                        st.session_state.passcode_verified = True
+                        st.success("✅ App PIN updated! Unlocking your account...")
+                        time.sleep(1)
+                        st.rerun()
+    else:
+        st.error("❌ This reset link is invalid or has expired.")
+        if st.button("Back to Log In"):
+            st.query_params.clear()
+            st.rerun()
+    st.stop()
+
+# --- 4. SESSION STATE & AUTHENTICATION ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_name" not in st.session_state:
@@ -286,16 +451,15 @@ if "user_name" not in st.session_state:
 if "passcode_verified" not in st.session_state:
     st.session_state.passcode_verified = False
 
-query_params = st.query_params
 if "user" in query_params and query_params["user"]:
     st.session_state.user_name = query_params["user"]
     st.session_state.logged_in = True
 
 if not st.session_state.logged_in:
     st.title("🤖 Welcome to Muk AI")
-    st.markdown("### Secure Sign In & Account Registration")
+    st.markdown("### Secure Sign In, Registration & Account Recovery")
     
-    tab_login, tab_signup = st.tabs(["🔑 Log In", "📝 Sign Up"])
+    tab_login, tab_signup, tab_forgot_pw = st.tabs(["🔑 Log In", "📝 Sign Up", "❓ Forgot Password"])
     
     with tab_login:
         with st.form("login_form"):
@@ -311,7 +475,7 @@ if not st.session_state.logged_in:
                         st.session_state.user_name = username
                         st.session_state.logged_in = True
                         st.session_state.saved_passcode = passcode
-                        st.session_state.passcode_verified = False # Require entering passcode
+                        st.session_state.passcode_verified = False
                         st.rerun()
                     else:
                         st.error("❌ Invalid username/email or password.")
@@ -321,7 +485,7 @@ if not st.session_state.logged_in:
             new_username = st.text_input("Choose a Username")
             new_email = st.text_input("Email Address")
             new_password = st.text_input("Choose a Password", type="password")
-            new_passcode = st.text_input("Set a 4-Digit App Passcode / PIN", type="password", max_chars=6, placeholder="e.g. 1234")
+            new_passcode = st.text_input("Set a 4-6 Digit App Passcode / PIN", type="password", max_chars=6, placeholder="e.g. 1234")
             confirm_password = st.text_input("Confirm Password", type="password")
             btn_signup = st.form_submit_button("Create Account")
             if btn_signup:
@@ -337,16 +501,37 @@ if not st.session_state.logged_in:
                         st.success(msg)
                     else:
                         st.error(f"❌ {msg}")
+
+    with tab_forgot_pw:
+        st.write("Forgot your password? Enter your registered email address and we will send you a confirmation button to create a new password.")
+        with st.form("forgot_pw_form"):
+            recovery_email = st.text_input("Registered Email Address")
+            send_pw_btn = st.form_submit_button("Send Password Reset Email")
+            if send_pw_btn:
+                if not recovery_email.strip():
+                    st.warning("⚠️ Please enter your email address.")
+                else:
+                    found_user = get_user_by_email(recovery_email.strip())
+                    if found_user:
+                        token = generate_reset_token(recovery_email.strip(), "password")
+                        sent, info_msg = send_recovery_email(recovery_email.strip(), found_user, token, "password")
+                        if sent:
+                            st.success(info_msg)
+                        else:
+                            st.error(info_msg)
+                    else:
+                        st.error("❌ No account found with that email address.")
     st.stop()
 
-# --- 4. PASSCODE LOCK SCREEN ---
+# --- 5. PASSCODE LOCK SCREEN & FORGOT PIN ---
 if not st.session_state.get("passcode_verified", False):
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
-    c.execute("SELECT app_passcode FROM users WHERE username=?", (st.session_state.user_name,))
+    c.execute("SELECT app_passcode, email FROM users WHERE username=?", (st.session_state.user_name,))
     row = c.fetchone()
     conn.close()
     correct_passcode = row[0] if row else ""
+    user_email = row[1] if row else ""
 
     st.title(f"🔒 App Locked for {st.session_state.user_name}")
     st.markdown("### Enter your secure App Passcode / PIN to unlock your history and session:")
@@ -361,18 +546,31 @@ if not st.session_state.get("passcode_verified", False):
             else:
                 st.error("❌ Incorrect passcode. Try again.")
                 
-    if st.button("🚪 Log Out"):
-        st.session_state.logged_in = False
-        st.session_state.user_name = ""
-        st.session_state.passcode_verified = False
-        st.rerun()
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        if st.button("❓ Forgot PIN? Send Reset Email"):
+            if user_email:
+                token = generate_reset_token(user_email, "pin")
+                sent, info_msg = send_recovery_email(user_email, st.session_state.user_name, token, "pin")
+                if sent:
+                    st.success(info_msg)
+                else:
+                    st.error(info_msg)
+            else:
+                st.error("No email linked to this account.")
+    with col_p2:
+        if st.button("🚪 Log Out"):
+            st.session_state.logged_in = False
+            st.session_state.user_name = ""
+            st.session_state.passcode_verified = False
+            st.rerun()
     st.stop()
 
-# --- 5. LOAD PERSISTENT HISTORY FOR THIS USER ---
+# --- 6. LOAD PERSISTENT HISTORY FOR THIS USER ---
 if "global_history" not in st.session_state or not st.session_state.global_history:
     st.session_state.global_history = load_user_history(st.session_state.user_name)
 
-# --- 6. API CLIENT & SETTINGS ---
+# --- 7. API CLIENT & SETTINGS ---
 api_key = None
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
