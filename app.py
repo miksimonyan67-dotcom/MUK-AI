@@ -99,15 +99,20 @@ def clear_user_history_db(username):
     conn.commit()
     conn.close()
 
-# --- 2. FUTURISTIC UI STYLING & SOUND FX ---
+# --- 2. FUTURISTIC UI STYLING & HIDING STREAMLIT BRANDING ---
 futuristic_style = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
 
-footer { visibility: hidden !important; }
-[data-testid="stStatusWidget"] { display: none !important; }
-.stDeployButton { display: none !important; }
-div[class*="viewerBadge"] { display: none !important; }
+/* --- HIDE ALL STREAMLIT BRANDING, MENUS, AND FORK/VIEWER BADGES --- */
+footer { visibility: hidden !important; display: none !important; }
+[data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
+.stDeployButton { display: none !important; visibility: hidden !important; }
+div[class*="viewerBadge"] { display: none !important; visibility: hidden !important; }
+#MainMenu { visibility: hidden !important; display: none !important; }
+header { visibility: hidden !important; display: none !important; }
+.stAppDeployButton { display: none !important; visibility: hidden !important; }
+div[data-testid="stToolbar"] { display: none !important; visibility: hidden !important; }
 
 [data-testid="collapsedControl"] {
     display: flex !important;
