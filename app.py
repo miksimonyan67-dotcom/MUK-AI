@@ -3,6 +3,7 @@ import re
 import sqlite3
 import bcrypt
 from io import BytesIO
+import os
 import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
@@ -99,7 +100,7 @@ def clear_user_history_db(username):
     conn.commit()
     conn.close()
 
-# --- 2. FUTURISTIC UI STYLING & HIDING ALL STREAMLIT BADGES ---
+# --- 2. FUTURISTIC UI STYLING & SIDEBAR TOGGLE FIX ---
 futuristic_style = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
@@ -108,10 +109,8 @@ futuristic_style = """
 footer { visibility: hidden !important; display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
 .stDeployButton { display: none !important; visibility: hidden !important; }
-div[class*="viewerBadge"] { display: none !important; visibility: hidden !important; }
-#MainMenu { visibility: hidden !important; display: none !important; }
-header { visibility: hidden !important; display: none !important; }
 .stAppDeployButton { display: none !important; visibility: hidden !important; }
+#MainMenu { visibility: hidden !important; display: none !important; }
 div[data-testid="stToolbar"] { display: none !important; visibility: hidden !important; }
 [data-testid="stDecoration"] { display: none !important; }
 div.viewerBadge_container__1QSob { display: none !important; visibility: hidden !important; }
@@ -119,11 +118,22 @@ div.viewerBadge_container__1QSob { display: none !important; visibility: hidden 
 iframe[title="streamlitAppBadge"] { display: none !important; visibility: hidden !important; }
 section[class*="viewerBadge"] { display: none !important; visibility: hidden !important; }
 
-[data-testid="collapsedControl"] {
+/* Keep header visible so the >> toggle button works */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    visibility: visible !important;
+    display: flex !important;
+}
+
+/* Force >> sidebar expand button to stay visible & styled */
+[data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
     color: #38bdf8 !important;
+    background-color: rgba(13, 19, 38, 0.9) !important;
+    border: 1px solid #38bdf8 !important;
+    border-radius: 8px !important;
     z-index: 999999 !important;
 }
 
@@ -392,12 +402,13 @@ if not st.session_state.get("passcode_verified", False):
 if "global_history" not in st.session_state or not st.session_state.global_history:
     st.session_state.global_history = load_user_history(st.session_state.user_name)
 
-# --- 6. API CLIENT & SETTINGS ---
-api_key = None
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-except Exception:
-    st.error("⚠️ GEMINI_API_KEY not found in Streamlit Secrets! Please add your key in your Streamlit Cloud settings.")
+# --- 6. API CLIENT & SETTINGS (SUPPORTS RENDER & STREAMLIT SECRETS) ---
+api_key = os.environ.get("GEMINI_API_KEY")
+if not api_key:
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        st.error("⚠️ GEMINI_API_KEY not found! Please add your key in your Environment Variables or Streamlit Secrets.")
 
 client = None
 if api_key:
