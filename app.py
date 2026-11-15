@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 st.set_page_config(
-    page_title="Muk AI - Ultimate AI Assistant",
-    page_icon="🤖",
+    page_title="Muk AI - Ultimate AI Assistant by Simonyan Mikayel",
+    page_icon="🖱️",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -322,7 +322,7 @@ if "user" in query_params and query_params["user"]:
     st.session_state.logged_in = True
 
 if not st.session_state.logged_in:
-    st.title("🤖 Welcome to Muk AI")
+    st.title("🖱️ Welcome to Muk AI")
     st.markdown("### Secure Sign In & Account Registration")
     
     tab_login, tab_signup = st.tabs(["🔑 Log In", "📝 Sign Up"])
@@ -431,7 +431,7 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("👤 User Avatar Style")
 user_avatar_choice = st.sidebar.radio("Choose Avatar", ["👦 AI Boy", "👧 AI Girl"], index=0)
 user_avatar_icon = "👨‍💻" if "Boy" in user_avatar_choice else "👩‍💻"
-bot_avatar_icon = "🤖"
+bot_avatar_icon = "🖱️"
 
 WORLD_LANGUAGES = [
     "English", "Հայերեն (Armenian)", "Русский (Russian)", "Español (Spanish)", 
