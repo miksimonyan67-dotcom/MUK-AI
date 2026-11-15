@@ -73,23 +73,34 @@ def log_user_login(username):
 def create_user(username, email, password, passcode):
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
+    
+    # Check if username already exists
+    c.execute("SELECT username FROM users WHERE username=?", (username.strip(),))
+    if c.fetchone():
+        conn.close()
+        return False, "This username is already used. Please choose another."
+        
+    # Check if email already exists
+    c.execute("SELECT email FROM users WHERE email=?", (email.strip().lower(),))
+    if c.fetchone():
+        conn.close()
+        return False, "This email is already used. Please use another."
+        
     salt = bcrypt.gensalt()
     pw_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
     try:
-        c.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (username, email.lower(), pw_hash, passcode))
+        c.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (username.strip(), email.strip().lower(), pw_hash, passcode.strip()))
         conn.commit()
         conn.close()
         return True, "Account created successfully! Please log in."
-    except sqlite3.IntegrityError as e:
+    except Exception as e:
         conn.close()
-        if "username" in str(e):
-            return False, "Username already exists."
-        return False, "Email already registered."
+        return False, f"Registration error: {e}"
 
 def verify_user(username_or_email, password):
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
-    c.execute("SELECT username, password_hash, app_passcode FROM users WHERE username=? OR email=?", (username_or_email, username_or_email.lower()))
+    c.execute("SELECT username, password_hash, app_passcode FROM users WHERE username=? OR email=?", (username_or_email.strip(), username_or_email.strip().lower()))
     user = c.fetchone()
     conn.close()
     
@@ -119,12 +130,10 @@ def clear_user_history_db(username):
     conn.commit()
     conn.close()
 
-# --- 2. FUTURISTIC UI STYLING & SIDEBAR TOGGLE FIX ---
-futuristic_style = """
+# --- 2. CLEAN NORMAL UI STYLING & STANDARD SIDEBAR CONTROLS ---
+clean_style = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap');
-
-/* --- HIDE ALL STREAMLIT BRANDING, MENUS, AND CORNER CLOUD BADGES --- */
+/* HIDE STREAMLIT BRANDING BADGES */
 footer { visibility: hidden !important; display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
 .stDeployButton { display: none !important; visibility: hidden !important; }
@@ -132,165 +141,19 @@ footer { visibility: hidden !important; display: none !important; }
 #MainMenu { visibility: hidden !important; display: none !important; }
 div[data-testid="stToolbar"] { display: none !important; visibility: hidden !important; }
 [data-testid="stDecoration"] { display: none !important; }
-div.viewerBadge_container__1QSob { display: none !important; visibility: hidden !important; }
-.styles_viewerBadge__1yG5_ { display: none !important; visibility: hidden !important; }
-iframe[title="streamlitAppBadge"] { display: none !important; visibility: hidden !important; }
-section[class*="viewerBadge"] { display: none !important; visibility: hidden !important; }
 
-/* Keep header visible so the >> toggle button works */
+/* Keep header and sidebar toggle button fully functional */
 header[data-testid="stHeader"] {
     background: transparent !important;
     visibility: visible !important;
     display: flex !important;
 }
 
-/* Force >> sidebar expand button to stay visible & styled */
 [data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
-    color: #38bdf8 !important;
-    background-color: rgba(13, 19, 38, 0.9) !important;
-    border: 1px solid #38bdf8 !important;
-    border-radius: 8px !important;
     z-index: 999999 !important;
-}
-
-.stApp {
-    background-color: #050711;
-    background-image: 
-        radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-        linear-gradient(rgba(56, 189, 248, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56, 189, 248, 0.02) 1px, transparent 1px),
-        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
-    background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px, 100% 4px;
-    color: #e2e8f0;
-    font-family: 'Share Tech Mono', monospace;
-}
-
-h1, h2, h3 {
-    font-family: 'Orbitron', sans-serif !important;
-    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 1.5px;
-    text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
-}
-
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: #050711;
-}
-::-webkit-scrollbar-thumb {
-    background: #38bdf8;
-    border-radius: 3px;
-    box-shadow: 0 0 12px #38bdf8;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #c084fc;
-    box-shadow: 0 0 18px #c084fc;
-}
-
-section[data-testid="stSidebar"] {
-    background-color: rgba(9, 13, 26, 0.92);
-    backdrop-filter: blur(16px);
-    border-right: 1px solid rgba(56, 189, 248, 0.25);
-    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
-}
-
-section[data-testid="stSidebar"] p, 
-section[data-testid="stSidebar"] span, 
-section[data-testid="stSidebar"] label, 
-section[data-testid="stSidebar"] h1, 
-section[data-testid="stSidebar"] h2, 
-section[data-testid="stSidebar"] h3 {
-    color: #f8fafc !important;
-}
-
-section[data-testid="stSidebar"] code {
-    background-color: rgba(56, 189, 248, 0.15) !important;
-    color: #38bdf8 !important;
-    padding: 3px 8px !important;
-    border-radius: 6px !important;
-    border: 1px solid rgba(56, 189, 248, 0.4) !important;
-    font-size: 14px !important;
-}
-
-.stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
-    background-color: rgba(13, 19, 38, 0.9) !important;
-    border: 1px solid rgba(56, 189, 248, 0.4) !important;
-    border-left: 3px solid #38bdf8 !important;
-    color: #f8fafc !important;
-    border-radius: 6px !important;
-    backdrop-filter: blur(8px);
-}
-.stTextInput input:hover, .stTextArea textarea:hover, .stSelectbox div[data-baseweb="select"]:hover {
-    border-color: #c084fc !important;
-    box-shadow: 0 0 20px rgba(192, 132, 252, 0.4) !important;
-    transform: translateY(-2px);
-}
-
-[data-testid="stChatInput"], [data-testid="stChatInput"] div[data-baseweb="base-input"] {
-    background-color: rgba(13, 19, 38, 0.95) !important;
-    border: 1px solid rgba(56, 189, 248, 0.5) !important;
-    border-radius: 8px !important;
-    color: #f8fafc !important;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
-}
-[data-testid="stChatInput"] textarea {
-    background-color: transparent !important;
-    color: #f8fafc !important;
-}
-[data-testid="stChatInput"] textarea::placeholder {
-    color: #94a3b8 !important;
-}
-
-div[data-baseweb="tab-list"] {
-    display: flex !important;
-    visibility: visible !important;
-    gap: 8px;
-    background: rgba(9, 13, 26, 0.75);
-    padding: 8px;
-    border-radius: 12px;
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    backdrop-filter: blur(12px);
-    overflow-x: auto !important;
-}
-div[data-baseweb="tab"] {
-    background-color: transparent !important;
-    border-radius: 8px !important;
-    color: #94a3b8 !important;
-    font-family: 'Orbitron', sans-serif !important;
-    font-size: 11px !important;
-    transition: all 0.3s ease;
-    white-space: nowrap !important;
-}
-div[data-baseweb="tab"][aria-selected="true"] {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
-    color: #38bdf8 !important;
-    border: 1px solid #38bdf8 !important;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
-}
-
-.stButton > button {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
-    color: #38bdf8;
-    border: 1px solid #818cf8;
-    border-radius: 8px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 13px;
-    box-shadow: 0 0 15px rgba(129, 140, 248, 0.35);
-    transition: all 0.3s ease;
-}
-.stButton > button:hover {
-    box-shadow: 0 0 28px rgba(56, 189, 248, 0.8);
-    border-color: #38bdf8;
-    color: #ffffff;
-    transform: translateY(-2px);
 }
 
 .block-container {
@@ -298,34 +161,7 @@ div[data-baseweb="tab"][aria-selected="true"] {
 }
 </style>
 """
-st.markdown(futuristic_style, unsafe_allow_html=True)
-
-cyber_js = """
-<script>
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSciFiClick() {
-    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(850, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(450, audioCtx.currentTime + 0.05);
-    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.05);
-}
-
-document.addEventListener('click', (e) => {
-    if (e.target.tagName === 'BUTTON' || e.target.getAttribute('role') === 'tab') {
-        playSciFiClick();
-    }
-});
-</script>
-"""
-components.html(cyber_js, height=0, width=0)
+st.markdown(clean_style, unsafe_allow_html=True)
 
 # --- 3. SESSION STATE & AUTHENTICATION ---
 if "logged_in" not in st.session_state:
@@ -422,7 +258,7 @@ if not st.session_state.get("passcode_verified", False):
 if "global_history" not in st.session_state or not st.session_state.global_history:
     st.session_state.global_history = load_user_history(st.session_state.user_name)
 
-# --- 6. API CLIENT & SETTINGS (SUPPORTS RENDER & STREAMLIT SECRETS) ---
+# --- 6. API CLIENT & SETTINGS ---
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     try:
@@ -451,28 +287,31 @@ if st.sidebar.button("🚪 Log Out"):
 if st.session_state.user_name.lower() == ADMIN_USERNAME.lower():
     st.sidebar.markdown("---")
     st.sidebar.subheader("📊 Creator Analytics")
-    conn = sqlite3.connect("muk_ai_secure.db")
-    c = conn.cursor()
-    
-    c.execute("SELECT COUNT(*) FROM users")
-    total_accounts = c.fetchone()[0]
-    
-    c.execute("SELECT COUNT(*) FROM login_logs")
-    total_logins = c.fetchone()[0]
-    
-    c.execute("SELECT username, login_time FROM login_logs ORDER BY id DESC LIMIT 10")
-    recent_logins = c.fetchall()
-    conn.close()
-    
-    st.sidebar.metric("Total Registered Accounts", total_accounts)
-    st.sidebar.metric("Total Logins", total_logins)
-    
-    with st.sidebar.expander("Recent Logins"):
-        if recent_logins:
-            for u_name, l_time in recent_logins:
-                st.caption(f"👤 **{u_name}** — {l_time}")
-        else:
-            st.caption("No logins recorded yet.")
+    try:
+        conn = sqlite3.connect("muk_ai_secure.db")
+        c = conn.cursor()
+        
+        c.execute("SELECT COUNT(*) FROM users")
+        total_accounts = c.fetchone()[0]
+        
+        c.execute("SELECT COUNT(*) FROM login_logs")
+        total_logins = c.fetchone()[0]
+        
+        c.execute("SELECT username, login_time FROM login_logs ORDER BY id DESC LIMIT 10")
+        recent_logins = c.fetchall()
+        conn.close()
+        
+        st.sidebar.metric("Total Registered Accounts", total_accounts)
+        st.sidebar.metric("Total Logins", total_logins)
+        
+        with st.sidebar.expander("Recent Logins"):
+            if recent_logins:
+                for u_name, l_time in recent_logins:
+                    st.caption(f"👤 **{u_name}** — {l_time}")
+            else:
+                st.caption("No logins recorded yet.")
+    except Exception:
+        st.sidebar.caption("Analytics loading...")
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("👤 User Avatar Style")
@@ -540,7 +379,7 @@ You are Muk AI, a multi-functional AI assistant.
 """
 
 st.title(f"Hello, {st.session_state.user_name}!")
-st.markdown("Your ultimate assistant with Aurora Borealis Gradients, Sound FX, and Holographic HUD!")
+st.markdown("Your ultimate assistant with sound effects and assistant tools.")
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "📚 Homework", 
@@ -725,7 +564,7 @@ with tab1:
         if not client:
             st.error("API client not initialized.")
         else:
-            with st.spinner("Muk AI is analyzing your input (auto-handling free tier limits)..."):
+            with st.spinner("Muk AI is analyzing your input..."):
                 try:
                     payload = []
                     pdf_text = ""
@@ -966,14 +805,9 @@ with tab6:
                 y = eval(expr, {"x": x, "np": np})
                 
                 fig, ax = plt.subplots()
-                ax.plot(x, y, color="#38bdf8", linewidth=2)
-                ax.set_title(f"Graph of {calc_input}", color="white")
+                ax.plot(x, y, color="#1E3A8A", linewidth=2)
+                ax.set_title(f"Graph of {calc_input}")
                 ax.grid(True, linestyle="--", alpha=0.5)
-                fig.patch.set_facecolor('#090d1a')
-                ax.set_facecolor('#050711')
-                ax.tick_params(colors='white')
-                ax.xaxis.label.set_color('white')
-                ax.yaxis.label.set_color('white')
                 
                 st.pyplot(fig)
                 hist_entry = f"Graph: {calc_input[:30]}"
@@ -1144,4 +978,4 @@ with tab11:
             st.warning("Please enter the main purpose of your email.")
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("<p style='font-size: 12px; color: #f8fafc; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size: 12px; text-align: center;'>My AI created by Simonyan Mikayel from Armenia</p>", unsafe_allow_html=True)
