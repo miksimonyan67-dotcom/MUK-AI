@@ -3,6 +3,7 @@ import re
 import sqlite3
 import bcrypt
 from io import BytesIO
+from datetime import datetime
 import os
 import streamlit as st
 import streamlit.components.v1 as components
@@ -20,6 +21,9 @@ from pptx import Presentation
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Set your exact Muk AI username here to view the private Creator Analytics panel
+ADMIN_USERNAME = "Mikayel"
+
 st.set_page_config(
     page_title="Muk AI - Ultimate AI Assistant by Simonyan Mikayel",
     page_icon="🖱️",
@@ -27,7 +31,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 1. DATABASE SETUP (USERS & PERSISTENT HISTORY) ---
+# --- 1. DATABASE SETUP (USERS, PERSISTENT HISTORY & LOGIN ANALYTICS) ---
 def init_db():
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
@@ -46,10 +50,25 @@ def init_db():
             history_item TEXT
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS login_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            login_time TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
 init_db()
+
+def log_user_login(username):
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    c.execute("INSERT INTO login_logs (username, login_time) VALUES (?, ?)", (username, now))
+    conn.commit()
+    conn.close()
 
 def create_user(username, email, password, passcode):
     conn = sqlite3.connect("muk_ai_secure.db")
@@ -338,6 +357,7 @@ if not st.session_state.logged_in:
                 else:
                     success, username, passcode = verify_user(login_input.strip(), login_password.strip())
                     if success:
+                        log_user_login(username)
                         st.session_state.user_name = username
                         st.session_state.logged_in = True
                         st.session_state.saved_passcode = passcode
@@ -426,6 +446,33 @@ if st.sidebar.button("🚪 Log Out"):
     st.session_state.user_name = ""
     st.session_state.passcode_verified = False
     st.rerun()
+
+# --- PRIVATE CREATOR ANALYTICS PANEL (ONLY VISIBLE TO ADMIN) ---
+if st.session_state.user_name.lower() == ADMIN_USERNAME.lower():
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📊 Creator Analytics")
+    conn = sqlite3.connect("muk_ai_secure.db")
+    c = conn.cursor()
+    
+    c.execute("SELECT COUNT(*) FROM users")
+    total_accounts = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM login_logs")
+    total_logins = c.fetchone()[0]
+    
+    c.execute("SELECT username, login_time FROM login_logs ORDER BY id DESC LIMIT 10")
+    recent_logins = c.fetchall()
+    conn.close()
+    
+    st.sidebar.metric("Total Registered Accounts", total_accounts)
+    st.sidebar.metric("Total Logins", total_logins)
+    
+    with st.sidebar.expander("Recent Logins"):
+        if recent_logins:
+            for u_name, l_time in recent_logins:
+                st.caption(f"👤 **{u_name}** — {l_time}")
+        else:
+            st.caption("No logins recorded yet.")
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("👤 User Avatar Style")
