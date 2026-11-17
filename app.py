@@ -1,4 +1,5 @@
 import time
+import time
 import re
 import sqlite3
 import bcrypt
@@ -74,13 +75,11 @@ def create_user(username, email, password, passcode):
     conn = sqlite3.connect("muk_ai_secure.db")
     c = conn.cursor()
     
-    # Check if username already exists
     c.execute("SELECT username FROM users WHERE username=?", (username.strip(),))
     if c.fetchone():
         conn.close()
         return False, "This username is already used. Please choose another."
         
-    # Check if email already exists
     c.execute("SELECT email FROM users WHERE email=?", (email.strip().lower(),))
     if c.fetchone():
         conn.close()
@@ -133,7 +132,6 @@ def clear_user_history_db(username):
 # --- 2. CLEAN NORMAL UI STYLING & STANDARD SIDEBAR CONTROLS ---
 clean_style = """
 <style>
-/* HIDE STREAMLIT BRANDING BADGES */
 footer { visibility: hidden !important; display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
 .stDeployButton { display: none !important; visibility: hidden !important; }
@@ -142,7 +140,6 @@ footer { visibility: hidden !important; display: none !important; }
 div[data-testid="stToolbar"] { display: none !important; visibility: hidden !important; }
 [data-testid="stDecoration"] { display: none !important; }
 
-/* Keep header and sidebar toggle button fully functional */
 header[data-testid="stHeader"] {
     background: transparent !important;
     visibility: visible !important;
@@ -395,61 +392,63 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "✉️ Email Writer"
 ])
 
-# --- 7. ULTRA-RESILIENT GEMINI-3.8-FLASH WITH SMART 429 & 503 RETRY HANDLER ---
-PRIMARY_MODEL = "gemini-3.8-flash"
+# --- 7. ULTRA-RESILIENT AI MODELS WITH AUTOMATIC FALLBACK (PREVENTS 503 / 429 ERRORS) ---
+MODELS_TO_TRY = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
 
-def _extract_retry_seconds(error_msg, default_wait=15):
+def _extract_retry_seconds(error_msg, default_wait=10):
     match = re.search(r"retry in (\d+(\.\d+)?)s", error_msg, re.IGNORECASE)
     if match:
-        return min(float(match.group(1)) + 1.5, 45.0)
+        return min(float(match.group(1)) + 1.0, 30.0)
     return default_wait
 
 def safe_generate(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for attempt in range(4):
-        try:
-            return client_obj.models.generate_content(
-                model=PRIMARY_MODEL, 
-                contents=contents,
-                config=config
-            )
-        except Exception as e:
-            last_error = e
-            err_str = str(e)
-            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
-                wait_sec = _extract_retry_seconds(err_str, default_wait=15)
-                st.toast(f"⏳ Free Tier quota reached (5 RPM). Waiting {int(wait_sec)}s to retry...")
-                time.sleep(wait_sec)
-                continue
-            elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
-                time.sleep(4 * (attempt + 1))
-                continue
-            break
+    
+    for model_name in MODELS_TO_TRY:
+        for attempt in range(2):
+            try:
+                return client_obj.models.generate_content(
+                    model=model_name, 
+                    contents=contents,
+                    config=config
+                )
+            except Exception as e:
+                last_error = e
+                err_str = str(e)
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
+                    wait_sec = _extract_retry_seconds(err_str, default_wait=10)
+                    time.sleep(wait_sec)
+                    continue
+                elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
+                    time.sleep(2)
+                    continue
+                break # If it's another error, skip to next model
     raise last_error
 
 def safe_generate_stream(client_obj, contents):
     config = types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION)
     last_error = None
-    for attempt in range(4):
-        try:
-            return client_obj.models.generate_content_stream(
-                model=PRIMARY_MODEL, 
-                contents=contents,
-                config=config
-            )
-        except Exception as e:
-            last_error = e
-            err_str = str(e)
-            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
-                wait_sec = _extract_retry_seconds(err_str, default_wait=15)
-                st.toast(f"⏳ Free Tier quota reached (5 RPM). Waiting {int(wait_sec)}s to retry...")
-                time.sleep(wait_sec)
-                continue
-            elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
-                time.sleep(4 * (attempt + 1))
-                continue
-            break
+    
+    for model_name in MODELS_TO_TRY:
+        for attempt in range(2):
+            try:
+                return client_obj.models.generate_content_stream(
+                    model=model_name, 
+                    contents=contents,
+                    config=config
+                )
+            except Exception as e:
+                last_error = e
+                err_str = str(e)
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
+                    wait_sec = _extract_retry_seconds(err_str, default_wait=10)
+                    time.sleep(wait_sec)
+                    continue
+                elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
+                    time.sleep(2)
+                    continue
+                break
     raise last_error
 
 def safe_generate_image(client_obj, prompt_text):
@@ -458,25 +457,26 @@ def safe_generate_image(client_obj, prompt_text):
         system_instruction=SYSTEM_INSTRUCTION
     )
     last_error = None
-    for attempt in range(4):
-        try:
-            return client_obj.models.generate_content(
-                model=PRIMARY_MODEL,
-                contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
-                config=config
-            )
-        except Exception as e:
-            last_error = e
-            err_str = str(e)
-            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
-                wait_sec = _extract_retry_seconds(err_str, default_wait=15)
-                st.toast(f"⏳ Free Tier quota reached (5 RPM). Waiting {int(wait_sec)}s to retry...")
-                time.sleep(wait_sec)
-                continue
-            elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
-                time.sleep(4 * (attempt + 1))
-                continue
-            break
+    
+    for model_name in MODELS_TO_TRY:
+        for attempt in range(2):
+            try:
+                return client_obj.models.generate_content(
+                    model=model_name,
+                    contents=f"Generate a high quality detailed image based on this description: {prompt_text}",
+                    config=config
+                )
+            except Exception as e:
+                last_error = e
+                err_str = str(e)
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str.upper():
+                    wait_sec = _extract_retry_seconds(err_str, default_wait=10)
+                    time.sleep(wait_sec)
+                    continue
+                elif "503" in err_str or "UNAVAILABLE" in err_str.upper():
+                    time.sleep(2)
+                    continue
+                break
     raise last_error
 
 def extract_pdf_text(uploaded_pdf):
